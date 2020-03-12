@@ -1,0 +1,49 @@
+labcal
+Drawer but stack
+drawer should just like app
+including app and screen(app below) screen of the app above including title
+
+Solutions:
+    main screen 
+        solution selector
+        scroll view
+            recipe
+        volume
+        scrollview
+            remarks
+    chemical editor
+        name
+        type-solute solvent
+        molar mass
+        remarks
+    solution editor
+        name
+        solute list
+        solvent list
+        when add a list will pop up to see a list of inputted chemical and solvent
+Scientific Calculators:
+    +-x* sin cos tan log tan-1 
+    plot graph
+machine learning:
+    kmean meanshift dbscan
+Biochemistry: 
+    Ligation->equired mass insert (g) = desired insert/vector molar ratio x mass of vector (g) x ratio of insert to vector lengths
+    DNA mass mole->moles dsDNA (mol) = mass of dsDNA (g)/((length of dsDNA (bp) x 617.96 g/mol) + 36.04 g/mol)
+                    moles of dsDNA ends = moles dsDNA (mol) x 2
+                    DNA copy number = moles of dsDNA x 6.022e23 molecules/mol
+                    moles ssDNA (mol) = mass of ssDNA (g)/((length of ssDNA (nt) x 308.97 g/mol) + 18.02 g/mol)
+                    moles of ssDNA ends = moles ssDNA (mol)
+                    DNA copy number = moles of ssDNA x 6.022e23 molecules/mol
+                    moles ssRNA (mol) = mass of ssRNA (g)/((length of ssRNA (nt) x 321.47 g/mol) + 18.02 g/mol)
+                    moles of ssRNA ends = moles ssRNA (mol)
+                    RNA copy number = moles of ssRNA x 6.022e23 molecules/mol
+    DNA ends mole->moles of dsDNA ends = mass of dsDNA (g)/((length of dsDNA (bp) x 617.96 g/mol) + 36.04 g/mol) x 2
+    nucleic acid conc->concentration (ug/ml) = OD260 x conversion factor
+                    conversion factors:
+                    1 OD260 Unit = 50 μg/ml for dsDNA
+                    1   OD260 Unit = 40 μg/ml ssRNA
+                    1 OD260 Unit = 33 μg/ml ssDNA
+                    ss oligo concentration (ug/ml) = OD260 x MW x 1000 / ε260
+                    where MW = molecular weight of oligo (non-phosphorylated)
+                    and ε260 = extinction coefficient of oligo at 260nm
+    Dilution cal->required stock solution (L) = desired final concentration (mol/L) / stock solution concentration (mol/L) x total final solution volume (L)
