@@ -5,18 +5,19 @@ const Stack = createStackNavigator();
 import Solutions from './Screen/Solutions/SolutionsScreen'
 import ScientificCalculator from './Screen/BioChemistry/'
 import LABCAL from './utils/Labcal'
-import { render } from 'react-dom';
 
 export default class App extends React {
+  renderScreen(){
+    var screenarray=[]
+    for(var i=0;i<LABCAL.APPLIST.length;i++){
+      screenarray.push(<Stack.Screen name={LABCAL.APPLIST[i].routename} headerMode='none' component={LABCAL.APPLIST[i].component}/>)
+    }
+  }
   render(){
     return (
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Screen name="" component={Solutions} />
-          <Stack.Screen name="Notifications" component={ScientificCalculator} />
-          <Stack.Screen name="Profile" component={MachineLearning} />
-          <Stack.Screen name="Settings" component={BioChemistry} />
-          <Stack.Screen name="Settings" component={BioInformatics} />
+          {this.renderScreen()}
         </Stack.Navigator>
       </NavigationContainer>
   

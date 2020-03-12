@@ -22,6 +22,9 @@ export default class LABCAL {
 
     static SCIENTIFICCALCULATORSCREENdn = 'Scientific Calculator'
 
+    static calculatorpage = 'calculator '
+    static graphplotter = 'graph plotter'
+
     //not yet implemented
     static MACHINELEARNINGSCREEN = 'machinelearningscreen'
     static BIOCHEMISTRYSCREEN = 'biochemistryscreen'
@@ -33,14 +36,16 @@ export default class LABCAL {
             id: LABCAL.SOLUTIONSSCREEN,
             icon: '',//represent on drawer
             color: '',//represent on drawer
-            routename: LABCAL.SOLUTIONSSCREENdn,
+            routename: LABCAL.SOLUTIONSSCREEN,
+            displayname: LABCAL.SOLUTIONSSCREENdn,
             component: Solutions
         },
         {
             id: LABCAL.SCIENTIFICCALCULATORSCREEN,
             icon: '',//represent on drawer
             color: '',//represent on drawer
-            routename: LABCAL.SCIENTIFICCALCULATORSCREENdn,
+            routename: LABCAL.SCIENTIFICCALCULATORSCREEN,
+            displayname: LABCAL.SCIENTIFICCALCULATORSCREENdn,
             component: ScientificCalculator
         },
     ]
