@@ -5,25 +5,24 @@
  * current screen = xxxxpage
  * drawerdisplayname = XXXXSCREENdn
  */
-import Solutions from '../Screen/Solutions/SolutionsScreen'
-import ScientificCalculator from '../Screen/ScientificCalculator/ScientificCalculatorScreen'
+
 export default class LABCAL {
     //solution app
     static SOLUTIONSSCREEN = 'solutionscreen';
 
     static SOLUTIONSSCREENdn = 'Solutions Mix'
 
-    static solutionpage = 'solution page'
-    static chemicaleditorpage = 'chemical editor'
-    static solutioneditorpage = 'solution editor'
+    static solutionpage = 'Solutions'
+    static chemicaleditorpage = 'Chemical Editor'
+    static solutioneditorpage = 'Solution Editor'
 
     //scientific calculator app
     static SCIENTIFICCALCULATORSCREEN = 'scientificcalculatorscreen'
 
     static SCIENTIFICCALCULATORSCREENdn = 'Scientific Calculator'
 
-    static calculatorpage = 'calculator '
-    static graphplotter = 'graph plotter'
+    static calculatorpage = 'Calculator '
+    static graphplotterpage = 'Graph Plotter'
 
     //not yet implemented
     static MACHINELEARNINGSCREEN = 'machinelearningscreen'
@@ -34,19 +33,19 @@ export default class LABCAL {
     static APPLIST = [
         {
             id: LABCAL.SOLUTIONSSCREEN,
-            icon: '',//represent on drawer
-            color: '',//represent on drawer
+            icon: 'flask-outline',//represent on drawer
+            color: 'purple',//represent on drawer
             routename: LABCAL.SOLUTIONSSCREEN,
             displayname: LABCAL.SOLUTIONSSCREENdn,
-            component: Solutions
+            //component: Solutions
         },
         {
             id: LABCAL.SCIENTIFICCALCULATORSCREEN,
-            icon: '',//represent on drawer
-            color: '',//represent on drawer
+            icon: 'calculator-variant',//represent on drawer
+            color: 'green',//represent on drawer
             routename: LABCAL.SCIENTIFICCALCULATORSCREEN,
             displayname: LABCAL.SCIENTIFICCALCULATORSCREENdn,
-            component: ScientificCalculator
+            //component: ScientificCalculator
         },
     ]
 }

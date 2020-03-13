@@ -3,24 +3,31 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 const Stack = createStackNavigator();
 import Solutions from './Screen/Solutions/SolutionsScreen'
-import ScientificCalculator from './Screen/BioChemistry/'
+import ScientificCalculator from './Screen/ScientificCalculator/ScientificCalculatorScreen'
 import LABCAL from './utils/Labcal'
 
-export default class App extends React {
-  renderScreen(){
-    var screenarray=[]
-    for(var i=0;i<LABCAL.APPLIST.length;i++){
-      screenarray.push(<Stack.Screen name={LABCAL.APPLIST[i].routename} headerMode='none' component={LABCAL.APPLIST[i].component}/>)
+export default class App extends React.Component {
+  renderScreen() {
+    var screenarray = []
+    for (var i = 0; i < LABCAL.APPLIST.length; i++) {
+      screenarray.push(<Stack.Screen name={LABCAL.APPLIST[i].routename} headerMode='none' component={
+        LABCAL.APPLIST[i].id == LABCAL.SOLUTIONSSCREEN ? Solutions : LABCAL.APPLIST[i].id == LABCAL.SCIENTIFICCALCULATORSCREEN ? ScientificCalculator : ScientificCalculator}
+      />)
     }
+    return screenarray
   }
-  render(){
+  render() {
     return (
       <NavigationContainer>
         <Stack.Navigator>
-          {this.renderScreen()}
+          {
+            //this.renderScreen()
+          }
+          <Stack.Screen name={LABCAL.SOLUTIONSSCREEN} options={{headerShown:false}} component={Solutions}/>
+          <Stack.Screen name={LABCAL.SCIENTIFICCALCULATORSCREEN} options={{headerShown:false}} component={ScientificCalculator}/>
         </Stack.Navigator>
       </NavigationContainer>
-  
+
     );
   }
 }
