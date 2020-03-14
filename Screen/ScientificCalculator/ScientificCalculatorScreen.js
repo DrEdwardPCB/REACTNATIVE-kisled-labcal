@@ -4,7 +4,7 @@ import { Header, Left, Right, Container, Icon, Button, Text, Title, Content } fr
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
 
-export default class ScientificCalculator extends React.Component {
+export default class ScienticCalculator extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -12,7 +12,7 @@ export default class ScientificCalculator extends React.Component {
             currentPage: LABCAL.solutionpage,
             currentApp: LABCAL.SOLUTIONSSCREENdn
         }
-        //console.log(state)
+
     }
     updatePage = (page) => {
         this.setState({ currentPage: page })
@@ -24,12 +24,12 @@ export default class ScientificCalculator extends React.Component {
         this._drawer.open()
     };
     render() {
-        //console.log(this.state)
+
         return (
             <Drawer
                 ref={(ref) => this._drawer = ref}
                 type="overlay"
-                content={<ControlPanel navigation={this.props.navigation} closeHandler={this.closeControlPanel} currentPage={this.state.currentPage} currentApp={this.state.currentApp} />}
+                content={<ControlPanel navigation={this.props.navigation} closeHandler={this.closeControlPanel} currentPage={this.state.currentPage} currentApp={this.state.currentApp} updatePage={this.updatePage} />}
                 tapToClose={true}
                 openDrawerOffset={0.2} // 20% gap on the right side of drawer
                 panCloseMask={0.2}
@@ -51,9 +51,7 @@ class MainView extends React.Component {
             currentPage: props.currentPage,
         }
     }
-    componentWillReceiveProps(props) {
-        this.setState({ currentPage: props.currentPage })
-    }
+
     renderPages() {
         //mapping
         if (this.state.currentPage == LABCAL.solutionpage) {
@@ -71,8 +69,13 @@ class MainView extends React.Component {
                     <Left>
                         <Button transparent onPress={() => { this.props.openHandler() }}>
                             <Icon type='MaterialCommunityIcons' name='menu-open' style={{ color: 'blue', fontSize: 24 }} />
+
                         </Button>
                     </Left>
+                    <Body>
+                        <Title>{this.currentPage}</Title>
+                    </Body>
+                    <Right />
                 </Header>
                 {this.renderPages()}
             </Container>

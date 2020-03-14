@@ -1,8 +1,9 @@
 import Drawer from 'react-native-drawer'
 import React from 'react'
-import { Header, Left, Right, Container, Icon, Button, Text, Title, Content } from 'native-base'
+import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
+import { AsyncStorage } from 'react-native'
 
 export default class Solutions extends React.Component {
     constructor(props) {
@@ -12,7 +13,7 @@ export default class Solutions extends React.Component {
             currentPage: LABCAL.solutionpage,
             currentApp: LABCAL.SOLUTIONSSCREENdn
         }
-        //console.log(state)
+        
     }
     updatePage = (page) => {
         this.setState({ currentPage: page })
@@ -24,7 +25,7 @@ export default class Solutions extends React.Component {
         this._drawer.open()
     };
     render() {
-        //console.log(this.state)
+        
         return (
             <Drawer
                 ref={(ref) => this._drawer = ref}
@@ -51,16 +52,23 @@ class MainView extends React.Component {
             currentPage: props.currentPage,
         }
     }
-    componentWillReceiveProps(props) {
-        this.setState({ currentPage: props.currentPage })
+    static getDerivedStateFromProps(props,state){
+        if(props.currentPage !== state.currentPage){
+            return{
+                currentPage:props.currentPage
+            }
+        }else{
+            return null
+        }
     }
+    
     renderPages() {
         //mapping
-        if (this.state.currentPage == LABCAL.solutionpage) {
+        if (this.state.currentPage === LABCAL.solutionpage) {
             return (<SolutionsMix></SolutionsMix>)
-        } else if (this.state.currentPage == LABCAL.chemicaleditorpage) {
+        } else if (this.state.currentPage === LABCAL.chemicaleditorpage) {
             return (<ChemicalEditor></ChemicalEditor>)
-        } else if (this.state.currentPage == LABCAL.solutioneditorpage) {
+        } else if (this.state.currentPage === LABCAL.solutioneditorpage) {
             return (<SolutionEditor></SolutionEditor>)
         }
     }
@@ -71,10 +79,18 @@ class MainView extends React.Component {
                     <Left>
                         <Button transparent onPress={() => { this.props.openHandler() }}>
                             <Icon type='MaterialCommunityIcons' name='menu-open' style={{ color: 'blue', fontSize: 24 }} />
+                            
                         </Button>
                     </Left>
                 </Header>
                 {this.renderPages()}
+                <Footer>
+                <Button 
+                full
+                onPress={()=>{
+                    AsyncStorage.clear(()=>{console.log('clear success')})
+                }}><Text>clear</Text></Button>
+                </Footer>
             </Container>
         )
 
@@ -86,7 +102,10 @@ class MainView extends React.Component {
 class SolutionsMix extends React.Component {
     render() {
         return (
-            <Content><Text>Solution</Text></Content>
+            <Content>
+                <Text>Solution</Text>
+                    
+            </Content>
         )
     }
 }

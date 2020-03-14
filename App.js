@@ -5,8 +5,13 @@ const Stack = createStackNavigator();
 import Solutions from './Screen/Solutions/SolutionsScreen'
 import ScientificCalculator from './Screen/ScientificCalculator/ScientificCalculatorScreen'
 import LABCAL from './utils/Labcal'
+import SolutionsManager from './utils/SolutionsManager';
 
 export default class App extends React.Component {
+  constructor(){
+    super()
+    SolutionsManager.getInstance()
+  }
   renderScreen() {
     var screenarray = []
     for (var i = 0; i < LABCAL.APPLIST.length; i++) {
