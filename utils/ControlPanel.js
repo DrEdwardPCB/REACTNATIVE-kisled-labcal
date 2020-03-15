@@ -1,7 +1,7 @@
 import Drawer from 'react-native-drawer'
 import React from 'react'
 import { Divider } from 'react-native-paper'
-import { Button, Grid, Col, Row, Container, Content, Title, Left, Right, Body, Icon, Header, Text } from 'native-base'
+import { Button, Grid, Col, Row, Container, Content, Title, Left, Right, Body, Icon, Header, Text, Card, CardItem } from 'native-base'
 import LABCAL from './Labcal.js'
 import { FlatList, ScrollView, Dimensions, View } from 'react-native'
 import { StackActions } from '@react-navigation/native';
@@ -119,24 +119,7 @@ export default class ControlPanel extends React.Component {
         var approw = []
         for (var i = 0; i < LABCAL.APPLIST.length; i++) {
             approw.push(
-                <Col size={50} key={LABCAL.APPLIST[i].id} style={{ padding: 10, justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}>
-                    <Row>
-                        <Col style={{ padding: 10, justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}>
-                            <Button style={{ backgroundColor: LABCAL.APPLIST[i].color, justifyContent: 'center', alignContent: 'center', alignItems: 'center', aspectRatio: 1, height: 60, borderRadius: 10 }}
-                                onPress={() => {
-                                    this.props.navigation.dispatch(StackActions.replace(LABCAL.APPLIST[i].routename))
-                                }}
-                            >
-                                <Icon type='MaterialCommunityIcons' name={LABCAL.APPLIST[i].icon} style={{ fontSize: 28, color: 'rgba(200,200,200,1)' }} />
-                            </Button>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col style={{ padding: 10, justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}>
-                            <Text style={{minWidth:100, backgroundColor:'black'}}>{LABCAL.APPLIST[i].displayname}</Text>
-                        </Col>
-                    </Row>
-                </Col>
+                <ApplicationIcon iconName={LABCAL.APPLIST[i].icon} iconColor={LABCAL.APPLIST[i].color} displayName={LABCAL.APPLIST[i].displayname} routename={(' '+LABCAL.APPLIST[i].routename).slice(1)} id={LABCAL.APPLIST[i].id} navigation={this.props.navigation}/>
             )
             if (approw.length == 2) {
                 apps.push(approw)
@@ -144,12 +127,13 @@ export default class ControlPanel extends React.Component {
             }
         }
         if (approw !== []) {
-            approw.push(<Col size={50} style={{ padding: 10, justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}></Col>)
+            approw.push(<Col size={50} style={{ justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}></Col>)
+            apps.push(approw)
         }
         var rowedApp = []
         for (var i = 0; i < apps.length; i++) {
             rowedApp.push(
-                <Row key={i}>
+                <Row key={i} style={{ minHeight: 100, marginBottom: 5 }}>
                     {apps[i][0]}
                     {apps[i][1]}
                 </Row>
@@ -183,19 +167,33 @@ export default class ControlPanel extends React.Component {
                 </Header>
                 <Content scrollEnabled={false}>
                     <Grid>
+                        <Row size={5} style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingTop: 10 }}>
+                            <Col style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center' }}>
+                                <Title>Pages</Title>
+                            </Col>
+                        </Row>
                         <Row size={5}>
-                            <Col>
-                                <ScrollView contentContainerStyle={{ height: Dimensions.get('window').height * 0.45 }}>
-                                    <View>
-                                        {this.renderPages()}
-                                    </View>
-                                </ScrollView>
+                            <Col style={{ padding: 10 }}>
+                                <Card>
+                                    <CardItem>
+                                        <ScrollView contentContainerStyle={{ height: Dimensions.get('window').height * 0.4 }}>
+                                            <View>
+                                                {this.renderPages()}
+                                            </View>
+                                        </ScrollView>
+                                    </CardItem>
+                                </Card>
                             </Col>
                         </Row>
                         <Divider />
+                        <Row size={5} style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingTop: 10 }}>
+                            <Col style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center' }}>
+                                <Title>Applications</Title>
+                            </Col>
+                        </Row>
                         <Row size={5}>
                             <Col>
-                                <ScrollView contentContainerStyle={{ height: Dimensions.get('window').height * 0.45, paddingTop: 30 }}>
+                                <ScrollView contentContainerStyle={{ height: Dimensions.get('window').height * 0.45, paddingTop: 10 }}>
                                     <View>
                                         {
                                             this.renderApp()
@@ -207,6 +205,53 @@ export default class ControlPanel extends React.Component {
                     </Grid>
                 </Content>
             </Container>
+        )
+    }
+}
+class ApplicationIcon extends React.Component{
+    constructor(props){
+        super(props)
+        this.state={
+            iconColor:props.iconColor,
+            iconName:props.iconName,
+            displayName:props.displayName,
+            routename:props.routename,
+            id:props.id
+        }
+    }
+    render(){
+        return(
+            <Col size={50} key={this.state.id} style={{ minHeight: 90, }}>
+                    <Row size={2} style={{ Height: 60, }}>
+                        <Col style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', height: 60 }}>
+                            <Button style={{
+                                backgroundColor: this.state.iconColor, justifyContent: 'center', alignContent: 'center', alignItems: 'center', aspectRatio: 1, height: 60, borderRadius: 10, shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5,
+                            }}
+                                onPress={() => {
+                                    //console.log(LABCAL.APPLIST[i])
+                                    //console.log(i)
+                                    //console.log(LABCAL.APPLIST[i].routename)
+                                    this.props.navigation.dispatch(StackActions.replace(this.state.routename))
+                                }}
+                            >
+                                <Icon type='MaterialCommunityIcons' name={this.state.iconName} style={{ fontSize: 28, color: 'rgba(200,200,200,1)' }} />
+                            </Button>
+                        </Col>
+                    </Row>
+                    <Row size={1} >
+                        <Col style={{ justifyContent: 'center', alignContent: 'center', alignItems: 'center', height: 15 }}>
+                            <Text style={{ textAlign: 'center', fontSize: 12, minHeight: 15, aspectRatio: 8 / 1, zIndex: 1000 }}>{this.state.displayName}</Text>
+                        </Col>
+                    </Row>
+                </Col>
         )
     }
 }

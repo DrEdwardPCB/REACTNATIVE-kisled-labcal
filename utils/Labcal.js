@@ -26,7 +26,12 @@ export default class LABCAL {
 
     //not yet implemented
     static MACHINELEARNINGSCREEN = 'machinelearningscreen'
+
+
     static BIOCHEMISTRYSCREEN = 'biochemistryscreen'
+    static BIOCHEMISTRYSCREENdn = 'BioChem Tools'
+
+
     static BIOINFORMATICSSCREEN = 'bioinformaticsscreen'
 
 
@@ -47,5 +52,13 @@ export default class LABCAL {
             displayname: LABCAL.SCIENTIFICCALCULATORSCREENdn,
             //component: ScientificCalculator
         },
+        /*{
+            id: LABCAL.BIOCHEMISTRYSCREEN,
+            icon: 'chemical-weapon',//represent on drawer
+            color: 'lime',//represent on drawer
+            routename: LABCAL.SCIENTIFICCALCULATORSCREEN,
+            displayname: LABCAL.BIOCHEMISTRYSCREENdn,
+            //component: ScientificCalculator
+        },*/
     ]
 }

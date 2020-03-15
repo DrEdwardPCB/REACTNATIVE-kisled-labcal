@@ -1,16 +1,17 @@
 import Drawer from 'react-native-drawer'
 import React from 'react'
-import { Header, Left, Right, Container, Icon, Button, Text, Title, Content } from 'native-base'
+import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
+import { AsyncStorage } from 'react-native'
 
-export default class ScienticCalculator extends React.Component {
+export default class ScientificCalculator extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
             navigation: props.navigation,
-            currentPage: LABCAL.solutionpage,
-            currentApp: LABCAL.SOLUTIONSSCREENdn
+            currentPage: LABCAL.calculatorpage,
+            currentApp: LABCAL.SCIENTIFICCALCULATORSCREENdn
         }
 
     }
@@ -51,16 +52,23 @@ class MainView extends React.Component {
             currentPage: props.currentPage,
         }
     }
+    static getDerivedStateFromProps(props, state) {
+        if (props.currentPage !== state.currentPage) {
+            return {
+                currentPage: props.currentPage
+            }
+        } else {
+            return null
+        }
+    }
 
     renderPages() {
         //mapping
-        if (this.state.currentPage == LABCAL.solutionpage) {
-            return (<SolutionsMix></SolutionsMix>)
-        } else if (this.state.currentPage == LABCAL.chemicaleditorpage) {
-            return (<ChemicalEditor></ChemicalEditor>)
-        } else if (this.state.currentPage == LABCAL.solutioneditorpage) {
-            return (<SolutionEditor></SolutionEditor>)
-        }
+        if (this.state.currentPage === LABCAL.solutionpage) {
+            return (<Calculator></Calculator>)
+        } else if (this.state.currentPage === LABCAL.chemicaleditorpage) {
+            return (<GraphPlotter></GraphPlotter>)
+        } 
     }
     render() {
         return (
@@ -72,12 +80,15 @@ class MainView extends React.Component {
 
                         </Button>
                     </Left>
-                    <Body>
-                        <Title>{this.currentPage}</Title>
-                    </Body>
-                    <Right />
                 </Header>
                 {this.renderPages()}
+                <Footer>
+                    <Button
+                        full
+                        onPress={() => {
+                            AsyncStorage.clear(() => { console.log('clear success') })
+                        }}><Text>clear</Text></Button>
+                </Footer>
             </Container>
         )
 
@@ -86,24 +97,21 @@ class MainView extends React.Component {
 
 
 
-class SolutionsMix extends React.Component {
+class Calculator extends React.Component {
     render() {
         return (
-            <Content><Text>Solution</Text></Content>
+            <Content style={{padding:10}}>
+                <Text>Calculator</Text>
+            </Content>
         )
     }
 }
-class ChemicalEditor extends React.Component {
+class GraphPlotter extends React.Component {
     render() {
         return (
-            <Content><Text>Chemical editor</Text></Content>
-        )
-    }
-}
-class SolutionEditor extends React.Component {
-    render() {
-        return (
-            <Content><Text>Solution editor</Text></Content>
+            <Content style={{padding:10}}>
+                <Text>Graph plotter</Text>
+            </Content>
         )
     }
 }
