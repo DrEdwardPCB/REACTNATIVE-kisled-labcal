@@ -1,9 +1,13 @@
 import Drawer from 'react-native-drawer'
 import React from 'react'
-import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body } from 'native-base'
+import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Grid, Row, Col } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
 import { AsyncStorage } from 'react-native'
+import CustomSearchBar from '../../utils/SearchBar'
+import Modal, { ModalContent, ModalTitle, ModalFooter, ModalButton } from 'react-native-modals'
+import { View, Dimensions } from 'react-native'
+import SolutionsManager from '../../utils/SolutionsManager'
 
 export default class Solutions extends React.Component {
     constructor(props) {
@@ -84,13 +88,17 @@ class MainView extends React.Component {
                     </Left>
                 </Header>
                 {this.renderPages()}
-                <Footer>
-                    <Button
-                        full
-                        onPress={() => {
-                            AsyncStorage.clear(() => { console.log('clear success') })
-                        }}><Text>clear</Text></Button>
-                </Footer>
+                {
+
+/*
+                    <Footer>
+                        <Button
+                            full
+                            onPress={() => {
+                                AsyncStorage.clear(() => { console.log('clear success') })
+                            }}><Text>clear</Text></Button>
+                    </Footer>
+                        */}
             </Container>
         )
 
@@ -102,17 +110,121 @@ class MainView extends React.Component {
 class SolutionsMix extends React.Component {
     render() {
         return (
-            <Content style={{padding:10}}>
-                <Text>Solution</Text>
+            <Content style={{ padding: 10 }} scrollEnabled={false}>
+                <Grid>
+                    <Row>{/**selector */}
+
+                    </Row>
+                    <Row>{/**image */}
+
+                    </Row>
+                    <Row>{/**control panel */}
+
+                    </Row>
+                    <Row>{/**recipe */}
+
+                    </Row>
+                </Grid>
             </Content>
         )
     }
 }
 class ChemicalEditor extends React.Component {
+    constructor() {
+        super()
+        this.state = {
+            visible: false,
+            currentChemical: null,
+            searchData: SolutionsManager.getInstance().getChemicalList(),
+        }
+    }
     render() {
         return (
-            <Content style={{padding:10}}>
-                <Text>Chemical editor</Text>
+            <Content style={{ padding: 10, paddingBottom:0 }} scrollEnabled={false}>
+                <Grid style={{minHeight:'100%'}}>
+                    <Row size={1} style={{ paddingBottom: 10, zIndex: 9999, maxHeight:67 }}>{/** */}
+                        <Col>
+                            <CustomSearchBar labelText='Chemical'
+                                displayData={this.state.searchData}
+                                onSelected={(id, name) => {
+                                    console.log(id)
+                                    var chemical = SolutionsManager.getInstance().getChemical(id.toString())
+                                    this.setState({ currentChemical: chemical }, () => {
+                                        console.log(this.state.currentChemical)
+                                    })
+
+                                }} />
+                        </Col>
+                    </Row>
+                    <Row size={1}>{/**image */}
+                        <Col>
+                            <Button danger style={{ width: '100%', zIndex: 1 }}>
+                                <Text>Remove Chemical</Text>
+                            </Button>
+                        </Col>
+                        <Col>
+                            <Button style={{ width: '100%', zIndex: -1 }}
+                                onPress={() => {
+                                    this.setState({ visible: true })
+                                }}
+                            >
+                                <Text>Add Chemical</Text>
+                            </Button>
+                        </Col>
+                    </Row>
+                    <Row size={18}>{/**control panel */}
+                        <Col></Col>
+                    </Row>
+                    <Row size={1} style={{ alignSelf: 'flex-end', alignItems:'flex-end' }}>{/**recipe */}
+                        <Button style={{ width: '100%', zIndex: 10 }}>
+                            <Text>Save</Text>
+                        </Button>
+                    </Row>
+                </Grid>
+                <Modal.BottomModal
+                    visible={this.state.visible}
+                    //onTouchOutside={() => this.setState({ visible: false })}
+                    height={0.8}
+                    width={1}
+                    //onSwipeOut={() => this.setState({ visible: false })}
+                    modalTitle={<ModalTitle title='New Chemicals'></ModalTitle>}
+                >
+                    <ModalContent
+                        style={{
+                            paddingTop: 15,
+                            flex: 1,
+                            backgroundColor: 'fff',
+                        }}
+                    >
+                        <Grid style={{ minHeight: '80%' }}>
+                            <Row size={6}>
+                                <Col>
+                                </Col>
+                            </Row>
+                            <Row size={1} style={{ alignSelf: 'flex-end' }}>
+                                <Col>
+                                    <Button danger style={{ width: '100%', zIndex: 1 }}
+                                        onPress={() => {
+                                            this.setState({ visible: false })
+                                        }}
+                                    >
+                                        <Text>Cancel</Text>
+                                    </Button>
+                                </Col>
+                                <Col>
+                                    <Button style={{ width: '100%', zIndex: -1 }}
+                                        onPress={() => {
+                                            this.setState({ visible: false })
+                                        }}
+                                    >
+                                        <Text>Confirm</Text>
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Grid>
+
+                    </ModalContent>
+                </Modal.BottomModal>
             </Content>
         )
     }
@@ -120,8 +232,21 @@ class ChemicalEditor extends React.Component {
 class SolutionEditor extends React.Component {
     render() {
         return (
-            <Content style={{padding:10}}>
-                <Text>Solution editor</Text>
+            <Content style={{ padding: 10 }} scrollEnabled={false}>
+                <Grid>
+                    <Row>{/**selector */}
+
+                    </Row>
+                    <Row>{/**image */}
+
+                    </Row>
+                    <Row>{/**control panel */}
+
+                    </Row>
+                    <Row>{/**recipe */}
+
+                    </Row>
+                </Grid>
             </Content>
         )
     }
