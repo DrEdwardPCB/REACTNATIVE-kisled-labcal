@@ -52,44 +52,9 @@ export default class ControlPanel extends React.Component {
                 updatePage: props.updatePage
             }
         }
-        //this.fillPages()
 
     }
-    /*fillPages = () => {
-        //mapping
-        if (this.props.currentApp == LABCAL.SOLUTIONSSCREENdn) {
-
-            this.state.FlatListItem = [
-                {
-                    id: 1,
-                    name: LABCAL.solutionpage
-                },
-                {
-                    id: 2,
-                    name: LABCAL.chemicaleditorpage
-                },
-                {
-                    id: 3,
-                    name: LABCAL.solutioneditorpage
-                },
-            ]
-
-        } else if (this.props.currentApp == LABCAL.SCIENTIFICCALCULATORSCREENdn) {
-            this.state
-                .FlatListItem = [
-                    {
-                        id: 1,
-                        name: LABCAL.calculatorpage
-                    },
-                    {
-                        id: 2,
-                        name: LABCAL.graphplotterpage
-                    },
-                ]
-
-        }
-    }
-*/
+    
     static getDerivedStateFromProps(props, state) {
         if (props.currentPage !== state.currentPage) {
             return {

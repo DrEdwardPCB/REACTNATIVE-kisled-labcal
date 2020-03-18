@@ -19,7 +19,8 @@ export default class CustomSearchBar extends React.Component {
             open: false,
             displayData: props.displayData,
             onSelected: props.onSelected,
-            debounce: null
+            //debounce: null,
+            onClear : props.onClear
         }
         console.log(props)
     }
@@ -32,7 +33,8 @@ export default class CustomSearchBar extends React.Component {
                         this.setState({
                             text: '',
                             open: false
-                        })
+                        },()=>{this.state.onClear()})
+                        
                     }}
                 >
                     <Icon type='Entypo' name='cross' style={{ fontSize: 24 }} />
@@ -47,9 +49,9 @@ export default class CustomSearchBar extends React.Component {
     renderData = () => {
         if (this.state.open) {
             return (
-                <Card style={{ position: "absolute", minWidth: '100%', height: Dimensions.get('window').height * 0.5, elevation: 10, top: 50 }}>
+                <Card style={{ position: "absolute", minWidth: Dimensions.get('window').width * 0.85, height: Dimensions.get('window').height * 0.5, elevation: 10, top: 50, alignSelf:'center' }}>
                     <CardItem>
-                        <ScrollView contentContainerStyle={{ height: Dimensions.get('window').height * 0.5, width: '100%' }}>
+                        <ScrollView contentContainerStyle={{ width: '100%', flexGrow:1}}>
                             {this.renderItem()}
                         </ScrollView>
                     </CardItem>
