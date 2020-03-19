@@ -24,6 +24,20 @@ export default class CustomSearchBar extends React.Component {
         }
         console.log(props)
     }
+    static getDerivedStateFromProps(props, state){
+        if(props.displayData!=state.displayData){
+            return {displayData:props.displayData}
+        }else{
+            return null
+        }
+        
+    }
+    clearText(){
+        this.setState({
+            text: '',
+            open: false
+        },()=>{this.state.onClear()})
+    }
     showCancelButton = () => {
         if (this.state.text !== '') {
             return (

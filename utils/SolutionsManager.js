@@ -115,7 +115,10 @@ export default class SolutionsManager {
         return found
     }
     getSolution(id){
-        return this.solutions.filter(e=>e.id===id)[0]
+        console.log(id)
+        var found=this.solutions.filter(e=>e.id===id)[0]
+        console.log(found)
+        return found
     }
     getSolutionList() {
         if (this.ready) {
@@ -168,7 +171,10 @@ export default class SolutionsManager {
         if(obj.name===''){
             return false
         }
-        if(!obj.solute&&obj.solute=='null'){
+        if(!obj.solute&&obj.solutionDensity=='n/a'){
+            return false
+        }
+        if(isNaN(obj.dissociationMultiplier)){
             return false
         }
         return true
@@ -181,6 +187,7 @@ export default class SolutionsManager {
         this.chemicals.push(obj)
         var saved = await this.saveData()
         if(saved){
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
             return true
         }else{
             return false
@@ -199,6 +206,8 @@ export default class SolutionsManager {
         })
         var saved=await this.saveData()
         if(saved){
+            
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
             return true
         }else{
             return false
@@ -212,6 +221,7 @@ export default class SolutionsManager {
         this.chemicals=deletedList
         var saved = await this.saveData()
         if(saved){
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
             return true
         }else{
             return false

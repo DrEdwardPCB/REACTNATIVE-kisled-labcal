@@ -3,11 +3,11 @@ import React from 'react'
 import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Grid, Row, Col, Picker, Form, Item, Input, Label, Textarea } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
-import { AsyncStorage, ScrollView, View, Dimensions } from 'react-native'
+import { AsyncStorage, ScrollView, View, Dimensions, Alert } from 'react-native'
 import CustomSearchBar from '../../utils/SearchBar'
 import Modal, { ModalContent, ModalTitle, ModalFooter, ModalButton } from 'react-native-modals'
 import SolutionsManager from '../../utils/SolutionsManager'
-import { Switch, Divider } from 'react-native-paper'
+import { Switch, Divider, DataTable } from 'react-native-paper'
 import uuid from 'react-native-uuid'
 
 
@@ -142,14 +142,17 @@ class ChemicalEditor extends React.Component {
             //currentChemical: null,
             searchData: SolutionsManager.getInstance().getChemicalList(),
             editable: false,
-            chemicalIsSolute: false,
+            chemicalIsSolute: true,
             chemicalid: uuid.v4(),
             chemicalName: '',
             chemicalMolarMass: '0',
             molarMassUnit: 'g/mol',
             chemicalRemarks: '',
+            chemicalDissocationMultiplier: '1',
+            chemicalSolutionDensity: 'n/a'
 
         }
+
     }
     handleDisplayValue = () => {
         var temparr = []
@@ -200,18 +203,21 @@ class ChemicalEditor extends React.Component {
                     <Row size={1} style={{ paddingBottom: 10, zIndex: 9999, maxHeight: 67 }}>{/** */}
                         <Col>
                             <CustomSearchBar labelText='Chemical'
+                                ref={component => this.mySearchBar = component}
                                 displayData={this.state.searchData}
                                 onSelected={(id, name) => {
                                     console.log(id)
                                     var chemical = SolutionsManager.getInstance().getChemical(id.toString())
-                                    this.setState({ 
+                                    this.setState({
                                         currentChemical: chemical,
                                         chemicalid: chemical.id,
                                         chemicalName: chemical.name,
                                         chemicalMolarMass: chemical.molarmass.toString(),
                                         molarMassUnit: 'g/mol',
+                                        chemicalSolutionDensity: chemical.solutionDensity,
                                         chemicalRemarks: chemical.remarks,
-                                        chemicalIsSolute: chemical.solute
+                                        chemicalIsSolute: chemical.solute,
+                                        chemicalDissocationMultiplier: chemical.dissociationMultiplier.toString()
                                     }, () => {
                                         console.log(this.state.currentChemical)
                                     })
@@ -226,6 +232,8 @@ class ChemicalEditor extends React.Component {
                                         chemicalMolarMass: '0',
                                         molarMassUnit: 'g/mol',
                                         chemicalRemarks: '',
+                                        chemicalSolutionDensity: 'n/a',
+                                        chemicalDissocationMultiplier: '1'
                                     })
                                 }}
                             />
@@ -234,18 +242,113 @@ class ChemicalEditor extends React.Component {
                     </Row>
                     <Row size={1}>{/**selection */}
                         <Col>
-                            <Button danger style={{ width: '100%', zIndex: 1 }}>
+                            <Button
+                                danger
+                                style={{ width: '100%', zIndex: 1 }}
+                                onPress={() => {
+                                    Alert.alert(
+                                        'Confirm delete',
+                                        'confirm delete the selected chemical',
+                                        [
+                                            {
+                                                text: 'Yes', onPress: async () => {
+                                                    var success = await SolutionsManager.getInstance().deleteChemical(this.state.chemicalid)
+                                                    if (success) {
+
+                                                        this.setState({
+                                                            searchData: SolutionsManager.getInstance().getChemicalList(),
+                                                            currentChemical: null,
+                                                            chemicalid: uuid.v4(),
+                                                            chemicalName: '',
+                                                            chemicalMolarMass: '0',
+                                                            molarMassUnit: 'g/mol',
+                                                            chemicalRemarks: '',
+                                                            chemicalSolutionDensity: 'n/a',
+                                                            chemicalDissocationMultiplier: '1'
+
+                                                        })
+                                                        this.mySearchBar.clearText()
+                                                        alert('operation success')
+                                                    } else {
+                                                        alert("operation failed")
+                                                    }
+
+                                                }
+                                            },
+                                            { text: 'No', onPress: () => console.log('No button clicked'), style: 'cancel' },
+                                        ],
+                                        {
+                                            cancelable: true
+                                        }
+                                    )
+                                }}
+                            >
                                 <Text>Remove Chemical</Text>
                             </Button>
                         </Col>
                         <Col>
-                            <Button 
-                            style={{ width: '100%', zIndex: -1 }}
-                                onPress={() => {
-                                    this.setState({ visible: true })
+                            <Button
+                                style={{ width: '100%', zIndex: -1 }}
+                                onPress={async () => {
+                                    if (this.state.currentChemical == null) {
+                                        var status = await SolutionsManager.getInstance().addNewChemical({
+                                            solute: this.state.chemicalIsSolute,
+                                            id: this.state.chemicalid,
+                                            solutionDensity: this.state.chemicalSolutionDensity,
+                                            name: this.state.chemicalName,
+                                            molarmass: this.state.chemicalMolarMass,
+                                            dissociationMultiplier: this.state.chemicalDissocationMultiplier,
+                                            remarks: this.state.chemicalRemarks,
+                                        })
+                                        if (status) {
+
+                                            this.setState({
+                                                searchData: SolutionsManager.getInstance().getChemicalList(),
+                                                currentChemical: null,
+                                                chemicalid: uuid.v4(),
+                                                chemicalName: '',
+                                                chemicalMolarMass: '0',
+                                                molarMassUnit: 'g/mol',
+                                                chemicalRemarks: '',
+                                                chemicalSolutionDensity: 'n/a',
+                                                chemicalDissocationMultiplier: '1'
+                                            })
+                                            this.mySearchBar.clearText()
+                                            alert('operation success')
+                                        } else {
+                                            alert('operation failed')
+                                        }
+                                    } else {
+                                        var status = await SolutionsManager.getInstance().editChemical({
+                                            solute: this.state.chemicalIsSolute,
+                                            id: this.state.chemicalid,
+                                            solutionDensity: this.state.chemicalSolutionDensity,
+                                            name: this.state.chemicalName,
+                                            molarmass: this.state.chemicalMolarMass,
+                                            dissociationMultiplier: this.state.chemicalDissocationMultiplier,
+                                            remarks: this.state.chemicalRemarks,
+                                        })
+                                        if (status) {
+                                            this.setState({
+                                                searchData: SolutionsManager.getInstance().getChemicalList(),
+                                                currentChemical: null,
+                                                chemicalid: uuid.v4(),
+                                                chemicalName: '',
+                                                chemicalMolarMass: '0',
+                                                molarMassUnit: 'g/mol',
+                                                chemicalRemarks: '',
+                                                chemicalSolutionDensity: 'n/a',
+                                                chemicalDissocationMultiplier: '1'
+                                            })
+                                            this.mySearchBar.clearText()
+                                            alert('operation success')
+                                        } else {
+                                            alert('operation failed')
+                                        }
+                                    }
                                 }}
                             >
-                                <Text>{this.state.currentChemical==null?"Add Chemical":"Save edited Chemical"}</Text>
+                                <Text>{this.state.currentChemical == null ? "Add Chemical" : "Save edited Chemical"}</Text>
                             </Button>
                         </Col>
                     </Row>
@@ -338,7 +441,7 @@ class ChemicalEditor extends React.Component {
                                         <ScrollView
                                             //style={{height:Dimensions.get('window').height*0.4}}
                                             //contentContainerStyle={{ width: '100%', height: Dimensions.get('window').height * 0.4 }}
-                                            contentInset={{ bottom: 100 }}
+                                            contentInset={{ bottom: 250 }}
                                         >
                                             <Form>
                                                 <Item style={{ padding: 10 }} fixedLabel>
@@ -347,6 +450,36 @@ class ChemicalEditor extends React.Component {
                                                         editable={this.state.editable}
                                                         value={this.state.chemicalName}
                                                         onChangeText={(val) => { this.setState({ chemicalName: val }) }}
+                                                    />
+                                                </Item>
+                                                <Item style={{ padding: 10 }} fixedLabel>
+                                                    <Label>Dissociation Multiplier</Label>
+                                                    <Input
+                                                        editable={this.state.editable}
+                                                        value={this.state.chemicalDissocationMultiplier}
+                                                        onChangeText={(val) => { this.setState({ chemicalDissocationMultiplier: val }) }}
+                                                        onBlur={() => {
+                                                            if (isNaN(this.state.chemicalDissocationMultiplier)) {
+                                                                this.setState({ chemicalDissocationMultiplier: '1' })
+                                                            }
+                                                        }}
+                                                    />
+                                                </Item>
+                                                <Item style={{ padding: 10 }} fixedLabel>
+                                                    <Label>Solution density(g/cm^3)</Label>
+                                                    <Input
+                                                        editable={this.state.editable && !this.state.chemicalIsSolute}
+                                                        value={this.state.chemicalSolutionDensity}
+                                                        onChangeText={(val) => { this.setState({ chemicalSolutionDensity: val }) }}
+                                                        onBlur={() => {
+                                                            if (isNaN(this.state.solutionDensity)) {
+                                                                if (this.state.chemicalIsSolute) {
+                                                                    this.setState({ chemicalSolutionDensity: 'n/a' })
+                                                                } else {
+                                                                    this.setState({ chemicalSolutionDensity: '1' })
+                                                                }
+                                                            }
+                                                        }}
                                                     />
                                                 </Item>
                                                 <Item style={{ padding: 10 }}>
@@ -366,10 +499,13 @@ class ChemicalEditor extends React.Component {
                                                         </Row>
                                                     </Grid>
                                                 </Item>
-                                                <Item style={{ padding: 10 }} stackedLabel>
+                                                <Item style={{ padding: 10 }} stackedLabel
+                                                //disabled={!this.state.editable}
+                                                >
                                                     <Label>Remarks</Label>
                                                     <Textarea
-                                                        editable={this.state.editable}
+
+                                                        disabled={!this.state.editable}
                                                         rowSpan={5}
                                                         bordered
                                                         style={{ width: '100%' }}
@@ -390,24 +526,168 @@ class ChemicalEditor extends React.Component {
     }
 }
 class SolutionEditor extends React.Component {
+    constructor() {
+        super()
+        this.state = {
+            //currentChemical: null,
+            searchData: SolutionsManager.getInstance().getSolutionList(),
+            editable: false,
+            solutionId: uuid.v4(),
+            solutionName: '',
+            solutionSolvent: [],
+            solutionSolute: [],
+            solutionPH: '7',
+            solutionRemarks: '',
+            solventModal:false,
+            soluteModal:false,
+
+        }
+
+    }
+    renderSolvent() {
+        dataRow=[]
+        for (var i = 0; i < this.state.solutionSolvent.length; i++) {
+            var Solventname=SolutionsManager.getInstance().getChemical(this.state.solutionSolvent[i].solvent).name
+            var SolventId=this.state.solutionSolvent[i].solvent
+            dataRow.push(
+                <DataTable.Row key={uuid.v4()}>
+                    <DataTable.Cell>{Solventname}</DataTable.Cell>
+                    <DataTable.Cell numeric>{this.state.solutionSolvent[i].concentration}</DataTable.Cell>
+                    <DataTable.Cell numeric>{this.state.solutionSolvent[i].unit}</DataTable.Cell>
+                    <DataTable.Cell numeric
+                    onPress={()=>{
+                        const referenceNum=SolventId
+                        var removed=this.state.solutionSolvent.filter((e)=>{return e.id!==referenceNum})
+                        this.setState({solutionSolvent:removed})
+                    }}
+                    ><Icon type='MaterialCommunityIcons' name='minius'/></DataTable.Cell>
+                </DataTable.Row>
+            )
+        }
+        return (
+            <DataTable>
+                <DataTable.Header>
+                    <DataTable.Title>Solvent</DataTable.Title>
+                    <DataTable.Title numeric>Fraction</DataTable.Title>
+                    <DataTable.Title numeric>Fraction unit</DataTable.Title>
+                    <DataTable.Title numeric><Icon type='MaterialCommunityIcons' name='plus-minus'/></DataTable.Title>
+                </DataTable.Header>
+                {dataRow}
+                <DataTable.Row>
+                    <DataTable.Cell></DataTable.Cell>
+                    <DataTable.Cell></DataTable.Cell>
+                    <DataTable.Cell></DataTable.Cell>
+                    <DataTable.Cell numeric><Icon type='MaterialCommunityIcons' name='plus'/></DataTable.Cell>
+                </DataTable.Row>
+            </DataTable>
+        )
+
+    }
+    renderSolute() {
+
+    }
     render() {
         return (
-            <Content style={{ padding: 10 }} scrollEnabled={false}>
-                <Grid>
-                    <Row>{/**selector */}
+            <Content style={{ padding: 10, paddingBottom: 0 }} scrollEnabled={false}>
+                <Grid style={{ minHeight: '100%' }}>
+                    <Row size={1} style={{ paddingBottom: 10, zIndex: 9999, maxHeight: 67 }}>{/** */}
+                        <Col>
+                            <CustomSearchBar labelText='Chemical'
+                                ref={component => this.mySearchBar = component}
+                                displayData={this.state.searchData}
+                                onSelected={(id, name) => {
+                                    console.log(id)
+                                    var solution = SolutionsManager.getInstance().getSolution(id.toString())
+                                    this.setState({
+                                        currentSolution: solution,
+                                        solutionid: solution.id,
+                                        solutionName: solution.name,
+                                        solutionSolvent: solution.solvent,
+                                        solutionSolute: solution.solute,
+                                        solutionPH: solution.pH.toString(),
+                                        solutionRemarks: solution.remarks
+                                    }, () => {
+                                        console.log(this.state.currentSolution)
+                                    })
 
+                                }}
+                                onClear={() => {
+                                    console.log("clearing")
+                                    this.setState({
+                                        currentSolution: null,
+                                        solutionid: uuid.v4(),
+                                        solutionName: '',
+                                        solutionSolvent: [],
+                                        solutionSolute: [],
+                                        solutionPH: '7',
+                                        solutionRemarks: ''
+                                    })
+                                }}
+                            />
+
+                        </Col>
                     </Row>
-                    <Row>{/**image */}
-
+                    <Row size={1}>{/**selection */}
+                        <Col>
+                            <Button
+                                danger
+                                style={{ width: '100%', zIndex: 1 }}
+                                onPress={() => { }}
+                            >
+                                <Text>Remove Solution</Text>
+                            </Button>
+                        </Col>
+                        <Col>
+                            <Button
+                                style={{ width: '100%', zIndex: -1 }}
+                                onPress={() => { }}
+                            >
+                                <Text>{this.state.currentSolution == null ? "Add Solution" : "Save edited Solution"}</Text>
+                            </Button>
+                        </Col>
                     </Row>
-                    <Row>{/**control panel */}
+                    <Row size={18} >{/**display details */}
+                        <Col>{/**edit lock */}
+                            <Row size={1} style={{ minHeight: Dimensions.get('window').height * 0.07 }}>
+                                <Col size={3} style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                                    <Text style={{ color: this.state.editable ? '#dc3545' : '#6c757d' }}>{this.state.editable ? "Edit enabled" : "Edit disabled"}</Text>
+                                </Col>
+                                <Col size={1} style={{ alignItems: 'center', justifyContent: 'center' }}>
+                                    <Switch
+                                        value={this.state.editable}
+                                        onValueChange={() => { this.setState({ editable: !this.state.editable }) }}
+                                        color='#007bff'
+                                    ></Switch>
+                                </Col>
+                            </Row>
+                            <Divider style={{ marginVertical: 5 }} />
+                            <Row size={4}>
+                                <Col>
+                                    <ScrollView>
 
-                    </Row>
-                    <Row>{/**recipe */}
+                                    </ScrollView>
+                                </Col>
+                            </Row>
+                            <Divider style={{ marginVertical: 5 }} />
+                            <Row size={4}>
+                                <Col>
+                                    <ScrollView>
 
+                                    </ScrollView>
+                                </Col>
+                            </Row>
+                            <Divider style={{ marginVertical: 5 }} />
+                            <Row size={4}>
+                                <Col>
+                                    <ScrollView>
+
+                                    </ScrollView>
+                                </Col>
+                            </Row>
+                        </Col>
                     </Row>
                 </Grid>
-            </Content>
+            </Content >
         )
     }
 }
