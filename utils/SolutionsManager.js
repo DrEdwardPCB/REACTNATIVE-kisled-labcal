@@ -10,27 +10,6 @@ export default class SolutionsManager {
         }
         return SolutionsManager.instance
     }
-    /**
-     * datastructure
-     * chemical:{
-     * solute:bool//if true = solute else = solvent
-     * id:string
-     * name:string
-     * molarmass:float
-     * remarks:string
-     * density:
-     * }
-     * solution:{
-     * id:string
-     * name:string
-     * solvent:[]
-     * solute:[
-     * {solute:id,concentration:float,unit:string}...
-     * ]
-     * pH:
-     * remarks:
-     * }
-     */
     constructor() {
         this.ready = false
         this.chemicals = []
@@ -97,8 +76,8 @@ export default class SolutionsManager {
         console.log('getting')
         console.log(status)
         if (status.filter(e => e == false).length == 0) {
-            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
-            this.solutionlist = this.solutions.map(e => { return { id: e.id, name: e.name } })
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name, solute:e.solute } })
+            this.solutionlist = this.solutions.map(e => { return { id: e.id, name: e.name} })
             this.ready = true
             return
         } else {
@@ -187,7 +166,7 @@ export default class SolutionsManager {
         this.chemicals.push(obj)
         var saved = await this.saveData()
         if(saved){
-            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name, solute:e.solute } })
             return true
         }else{
             return false
@@ -207,7 +186,7 @@ export default class SolutionsManager {
         var saved=await this.saveData()
         if(saved){
             
-            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name, solute:e.solute } })
             return true
         }else{
             return false
@@ -221,7 +200,7 @@ export default class SolutionsManager {
         this.chemicals=deletedList
         var saved = await this.saveData()
         if(saved){
-            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name } })
+            this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name, solute:e.solute } })
             return true
         }else{
             return false

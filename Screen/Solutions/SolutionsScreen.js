@@ -1,9 +1,9 @@
 import Drawer from 'react-native-drawer'
 import React from 'react'
-import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Grid, Row, Col, Picker, Form, Item, Input, Label, Textarea } from 'native-base'
+import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Grid, Row, Col, Picker, Form, Item, Input, Label, Textarea, Card, CardItem } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
-import { AsyncStorage, ScrollView, View, Dimensions, Alert } from 'react-native'
+import { AsyncStorage, ScrollView, View, Dimensions, Alert, SafeAreaView } from 'react-native'
 import CustomSearchBar from '../../utils/SearchBar'
 import Modal, { ModalContent, ModalTitle, ModalFooter, ModalButton } from 'react-native-modals'
 import SolutionsManager from '../../utils/SolutionsManager'
@@ -94,17 +94,6 @@ class MainView extends React.Component {
                     <Right></Right>
                 </Header>
                 {this.renderPages()}
-                {
-
-/*
-                    <Footer>
-                        <Button
-                            full
-                            onPress={() => {
-                                AsyncStorage.clear(() => { console.log('clear success') })
-                            }}><Text>clear</Text></Button>
-                    </Footer>
-                        */}
             </Container>
         )
 
@@ -159,14 +148,14 @@ class ChemicalEditor extends React.Component {
         this.state.chemicalMolarMass.split(".").forEach((v) => { if (v == "") { temparr.push("x") } else { temparr.push(v) } })
         var isfloat = temparr.filter((v) => { return isNaN(v) == true }).length == 0
         var tempNum = parseFloat(this.state.chemicalMolarMass)
-        console.log(temparr)
-        console.log(isfloat)
+        //console.log(temparr)
+        //console.log(isfloat)
         var tempNum = parseFloat(this.state.chemicalMolarMass)
         if (this.state.molarMassUnit === "g/mol" || this.state.molarMassUnit === "Da") {
-            console.log("noneed")
+            //console.log("noneed")
             var tempNum = parseFloat(this.state.chemicalMolarMass);
-            console.log(typeof (tempNum))
-            console.log(tempNum)
+            //console.log(typeof (tempNum))
+            //console.log(tempNum)
             if (!isfloat) {
                 return this.state.chemicalMolarMass
             } else {
@@ -181,7 +170,7 @@ class ChemicalEditor extends React.Component {
             }
         } else {
             //var tempNum = parseFloat(this.state.chemicalMolarMass);
-            console.log("need / 1000")
+            //console.log("need / 1000")
             if (!isfloat) {
                 return this.state.chemicalMolarMass
             } else {
@@ -206,7 +195,7 @@ class ChemicalEditor extends React.Component {
                                 ref={component => this.mySearchBar = component}
                                 displayData={this.state.searchData}
                                 onSelected={(id, name) => {
-                                    console.log(id)
+                                    //console.log(id)
                                     var chemical = SolutionsManager.getInstance().getChemical(id.toString())
                                     this.setState({
                                         currentChemical: chemical,
@@ -219,12 +208,12 @@ class ChemicalEditor extends React.Component {
                                         chemicalIsSolute: chemical.solute,
                                         chemicalDissocationMultiplier: chemical.dissociationMultiplier.toString()
                                     }, () => {
-                                        console.log(this.state.currentChemical)
+                                        //console.log(this.state.currentChemical)
                                     })
 
                                 }}
                                 onClear={() => {
-                                    console.log("clearing")
+                                    //console.log("clearing")
                                     this.setState({
                                         currentChemical: null,
                                         chemicalid: uuid.v4(),
@@ -538,65 +527,147 @@ class SolutionEditor extends React.Component {
             solutionSolute: [],
             solutionPH: '7',
             solutionRemarks: '',
-            solventModal:false,
-            soluteModal:false,
-
+            solventModal: false,
+            soluteModal: false,
+            solventHeight: 3 * Dimensions.get('window').height * 0.06,
+            soluteHeight: 3 * Dimensions.get('window').height * 0.06,
         }
 
     }
     renderSolvent() {
-        dataRow=[]
+        var dataRow = []
         for (var i = 0; i < this.state.solutionSolvent.length; i++) {
-            var Solventname=SolutionsManager.getInstance().getChemical(this.state.solutionSolvent[i].solvent).name
-            var SolventId=this.state.solutionSolvent[i].solvent
-            dataRow.push(
-                <DataTable.Row key={uuid.v4()}>
-                    <DataTable.Cell>{Solventname}</DataTable.Cell>
-                    <DataTable.Cell numeric>{this.state.solutionSolvent[i].concentration}</DataTable.Cell>
-                    <DataTable.Cell numeric>{this.state.solutionSolvent[i].unit}</DataTable.Cell>
-                    <DataTable.Cell numeric
-                    onPress={()=>{
-                        const referenceNum=SolventId
-                        var removed=this.state.solutionSolvent.filter((e)=>{return e.id!==referenceNum})
-                        this.setState({solutionSolvent:removed})
-                    }}
-                    ><Icon type='MaterialCommunityIcons' name='minius'/></DataTable.Cell>
-                </DataTable.Row>
-            )
+            var Solventname = SolutionsManager.getInstance().getChemical(this.state.solutionSolvent[i].solvent).name
+            dataRow.push(<Datarow
+                key={uuid.v4()}
+                type='solvent'
+                editable={this.state.editable}
+                id={this.state.solutionSolvent[i].solvent}
+                unit={this.state.solutionSolvent[i].unit}
+                concentration={this.state.solutionSolvent[i].concentration}
+                name={Solventname}
+                updateList={(id, operation, concentration, unit) => {
+                    if (operation == "delete") {
+                        this.setState({ solutionSolvent: this.state.solutionSolvent.filter((e) => { return id != e.solvent }) })
+                    } else {
+                        this.setState({
+                            solutionSolvent: this.state.solutionSolvent.map((e) => {
+                                if (e.solvent == id) {
+                                    e.concentration = concentration
+                                    e.unit = unit
+                                }
+                                return e
+                            })
+                        }, console.log(this.state))
+                    }
+                }}
+            />)
         }
         return (
-            <DataTable>
-                <DataTable.Header>
-                    <DataTable.Title>Solvent</DataTable.Title>
-                    <DataTable.Title numeric>Fraction</DataTable.Title>
-                    <DataTable.Title numeric>Fraction unit</DataTable.Title>
-                    <DataTable.Title numeric><Icon type='MaterialCommunityIcons' name='plus-minus'/></DataTable.Title>
-                </DataTable.Header>
-                {dataRow}
-                <DataTable.Row>
-                    <DataTable.Cell></DataTable.Cell>
-                    <DataTable.Cell></DataTable.Cell>
-                    <DataTable.Cell></DataTable.Cell>
-                    <DataTable.Cell numeric><Icon type='MaterialCommunityIcons' name='plus'/></DataTable.Cell>
-                </DataTable.Row>
-            </DataTable>
+            <Card style={{ maxHeight: Dimensions.get('window').height * 0.21, height: Dimensions.get('window').height * 0.21, minHeight: Dimensions.get('window').height * 0.21 }}>
+                <CardItem style={{ maxHeight: '100%', height: '100%', minHeight: '100%' }}>
+                    <ScrollView contentContainerStyle={{ height: this.state.solventHeight }}>
+                        <Grid>
+                            <Row>
+                                <Col size={2}><Text>Solvent</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Fraction</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Fraction unit</Text></Col>
+                                <Col size={0.75} style={{ alignItems: 'flex-end' }}><Icon type='MaterialCommunityIcons' name='plus-minus' /></Col>
+                            </Row>
+                            {dataRow}
+                            <Row>
+                                <Col size={2}></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}></Col>
+                                <Col size={0.75} style={{ alignItems: 'flex-end' }}>
+                                    <Button
+                                        transparent
+                                        onPress={() => { this.setState({ solventModal: true }) }}
+                                    >
+                                        <Icon type='MaterialCommunityIcons' name='plus' />
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Grid>
+                    </ScrollView>
+
+                </CardItem>
+            </Card>
         )
 
     }
     renderSolute() {
-
+        var dataRow1 = []
+        for (var i = 0; i < this.state.solutionSolute.length; i++) {
+            var Solutename = SolutionsManager.getInstance().getChemical(this.state.solutionSolute[i].solute).name
+            dataRow1.push(<Datarow
+                key={uuid.v4()}
+                type='solute'
+                editable={this.state.editable}
+                id={this.state.solutionSolute[i].solvent}
+                unit={this.state.solutionSolute[i].unit}
+                concentration={this.state.solutionSolute[i].concentration}
+                name={Solutename}
+                updateList={(id, operation, concentration, unit) => {
+                    if (operation == "delete") {
+                        this.setState({ solutionSolute: this.state.solutionSolute.filter((e) => { return id != e.solvent }) })
+                    } else {
+                        this.setState({
+                            solutionSolute: this.state.solutionSolute.map((e) => {
+                                if (e.solute == id) {
+                                    e.concentration = concentration
+                                    e.unit = unit
+                                }
+                                return e
+                            })
+                        }, console.log(this.state))
+                    }
+                }}
+            />)
+        }
+        return (
+            <Card style={{ maxHeight: Dimensions.get('window').height * 0.21, height: Dimensions.get('window').height * 0.21, minHeight: Dimensions.get('window').height * 0.21 }}>
+                <CardItem style={{ maxHeight: '100%', height: '100%', minHeight: '100%' }}>
+                    <ScrollView contentContainerStyle={{ height: this.state.solventHeight }}>
+                        <Grid>
+                            <Row>
+                                <Col size={2}><Text>Solute</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Concentration</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Concentration unit</Text></Col>
+                                <Col size={0.75} style={{ alignItems: 'flex-end' }}><Icon type='MaterialCommunityIcons' name='plus-minus' /></Col>
+                            </Row>
+                            {dataRow1}
+                            <Row>
+                                <Col size={2}></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}></Col>
+                                <Col size={0.75} style={{ alignItems: 'flex-end' }}>
+                                    <Button
+                                        transparent
+                                        onPress={() => { this.setState({ soluteModal: true }) }}
+                                    >
+                                        <Icon type='MaterialCommunityIcons' name='plus' />
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Grid>
+                    </ScrollView>
+                </CardItem>
+            </Card>
+        )
     }
     render() {
         return (
             <Content style={{ padding: 10, paddingBottom: 0 }} scrollEnabled={false}>
-                <Grid style={{ minHeight: '100%' }}>
+                <Grid style={{ minHeight: '100%', maxHeight: '100%' }}>
                     <Row size={1} style={{ paddingBottom: 10, zIndex: 9999, maxHeight: 67 }}>{/** */}
                         <Col>
-                            <CustomSearchBar labelText='Chemical'
+                            <CustomSearchBar
+                                labelText='Chemical'
                                 ref={component => this.mySearchBar = component}
                                 displayData={this.state.searchData}
                                 onSelected={(id, name) => {
-                                    console.log(id)
+                                    //console.log(id)
                                     var solution = SolutionsManager.getInstance().getSolution(id.toString())
                                     this.setState({
                                         currentSolution: solution,
@@ -607,12 +678,12 @@ class SolutionEditor extends React.Component {
                                         solutionPH: solution.pH.toString(),
                                         solutionRemarks: solution.remarks
                                     }, () => {
-                                        console.log(this.state.currentSolution)
+                                        //console.log(this.state.currentSolution)
                                     })
 
                                 }}
                                 onClear={() => {
-                                    console.log("clearing")
+                                    //console.log("clearing")
                                     this.setState({
                                         currentSolution: null,
                                         solutionid: uuid.v4(),
@@ -660,34 +731,205 @@ class SolutionEditor extends React.Component {
                                     ></Switch>
                                 </Col>
                             </Row>
-                            <Divider style={{ marginVertical: 5 }} />
                             <Row size={4}>
                                 <Col>
-                                    <ScrollView>
-
-                                    </ScrollView>
+                                    {this.renderSolvent()}
                                 </Col>
                             </Row>
-                            <Divider style={{ marginVertical: 5 }} />
+                            <Divider style={{ marginVertical: 2 }} />
                             <Row size={4}>
                                 <Col>
-                                    <ScrollView>
-
-                                    </ScrollView>
+                                    {this.renderSolute()}
                                 </Col>
                             </Row>
-                            <Divider style={{ marginVertical: 5 }} />
+                            <Divider style={{ marginVertical: 2 }} />
                             <Row size={4}>
-                                <Col>
-                                    <ScrollView>
-
-                                    </ScrollView>
-                                </Col>
+                                <Card style={{ height: '100%' }}>
+                                    <CardItem>
+                                        <ScrollView></ScrollView>
+                                    </CardItem>
+                                </Card>
                             </Row>
                         </Col>
                     </Row>
                 </Grid>
+                <Modal.BottomModal
+                    visible={this.state.solventModal}
+                    onTouchOutside={() => this.setState({ solventModal: false })}
+                    height={0.7}
+                    width={1}
+                    onSwipeOut={() => this.setState({ solventModal: false })}
+                    modalTitle={<ModalTitle title='Add Solvent'></ModalTitle>}
+                >
+                    <ModalContent
+                        style={{
+                            paddingTop: 15,
+                            flex: 1,
+                            backgroundColor: 'fff',
+                        }}
+                    >
+                        <View style={{ height: 60 }}>
+
+
+                            <CustomSearchBar
+                                clearAfterClick={true}
+                                labelText='Solvent'
+                                displayData={SolutionsManager.getInstance().getChemicalList().filter((e) => { return e.solute == false })}
+                                onSelected={(id, name) => {
+                                    var templist = this.state.solutionSolvent.map(e => e)
+                                    templist.push({ solvent: id, concentration: "1", unit: "%w" })
+                                    this.setState({
+                                        solutionSolvent: templist,
+                                        solventModal: false
+                                    }, () => {
+                                        this.setState({ solventHeight: (this.state.solutionSolvent.length + 2) * Dimensions.get('window').height * 0.06 })
+                                    })
+                                }}
+                            />
+                        </View>
+                    </ModalContent>
+                </Modal.BottomModal>
+                <Modal.BottomModal
+                    visible={this.state.soluteModal}
+                    onTouchOutside={() => this.setState({ soluteModal: false })}
+                    height={0.7}
+                    width={1}
+                    onSwipeOut={() => this.setState({ soluteModal: false })}
+                    modalTitle={<ModalTitle title='Add Solute'></ModalTitle>}
+                >
+                    <ModalContent
+                        style={{
+                            paddingTop: 15,
+                            flex: 1,
+                            backgroundColor: 'fff',
+                        }}
+                    >
+                        <View style={{ height: 60 }}>
+                            <CustomSearchBar
+                                clearAfterClick={true}
+                                labelText='Solute'
+                                displayData={SolutionsManager.getInstance().getChemicalList().filter((e) => { return e.solute == true })}
+                                onSelected={(id, name) => {
+                                    var templist = this.state.solutionSolute.map(e => e)
+                                    templist.push({ solute: id, concentration: "1", unit: "M" })
+                                    this.setState({
+                                        solutionSolute: templist,
+                                        soluteModal: false
+                                    }, () => { this.setState({ soluteHeight: (this.state.solutionSolute.length + 2) * Dimensions.get('window').height * 0.06 }) })
+                                }}
+                            />
+                        </View>
+                    </ModalContent>
+                </Modal.BottomModal>
             </Content >
+        )
+    }
+}
+class Datarow extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            name: props.name,
+            concentration: props.concentration,
+            unit: props.unit,
+            id: props.id,
+            updateList: props.updateList,
+            editable: props.editable,
+            type: props.type
+        }
+        console.log(props)
+    }
+    /*static getDerivedStateFromProps(props, state) {
+        if (props.concentration != state.concentration || props.unit != state.unit) {
+            return { concentration: props.concentration, unit: props.unit }
+        } else {
+            return null
+        }
+    }*/
+    renderPickerItem() {
+        if (this.state.type == 'solvent') {
+            return (
+                <Picker
+                    style={{ maxWidth: "100%" }}
+                    enabled={this.state.editable}
+                    selectedValue={this.state.unit}
+                    note={false}
+                    mode='dropdown'
+                    //iosIcon={<Icon name="arrow-down" />}
+                    onValueChange={(value) => {
+                        this.setState({ unit: value }, () => {
+                            console.log(this.state)
+                            this.state.updateList(this.state.id, 'edit', this.state.concentration, this.state.unit)
+                        })
+                    }}
+                >
+                    <Picker.Item label="%w" value="%w" />
+                    <Picker.Item label="%v" value="%v" />
+                </Picker>
+            )
+        } else {
+            return (
+                <Picker
+                    style={{ maxWidth: "100%" }}
+                    enabled={this.state.editable}
+                    selectedValue={this.state.unit}
+                    mode='dropdown'
+                    note={false}
+                    //iosIcon={<Icon name="arrow-down" />}
+                    onValueChange={(value) => {
+                        this.setState({ unit: value }, () => {
+                            this.state.updateList(this.state.id, 'edit', this.state.concentration, this.state.unit)
+                        })
+                    }}
+                >
+                    <Picker.Item label="µM" value="µM" />
+                    <Picker.Item label="mM" value="mM" />
+                    <Picker.Item label="M" value="M" />
+                </Picker>
+            )
+        }
+
+    }
+    render() {
+        return (
+            <Row>
+                <Col size={2} style={{ justifyContent: 'center' }}><Text>{this.state.name}</Text></Col>
+                <Col size={1} style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <Input
+                        editable={this.state.editable}
+                        value={this.state.concentration}
+                        onChangeText={(val) => {
+                            this.setState({ concentration: val })
+                        }}
+                        onBlur={() => {
+                            console.log(this.state.concentration)
+                            if (isNaN(this.state.concentration)) {
+                                this.setState({ concentration: '1' }, () => {
+                                    this.state.updateList(this.state.id, 'edit', this.state.concentration, this.state.unit)
+                                })
+                            } else {
+                                this.state.updateList(this.state.id, 'edit', this.state.concentration, this.state.unit)
+                            }
+
+                        }}
+                    />
+                </Col>
+                <Col size={1} style={{ alignContent: 'flex-end', justifyContent: 'center' }}>
+                    {this.renderPickerItem()}
+                </Col>
+                <Col size={0.75} style={{ alignContent: 'flex-end', justifyContent: 'center', }}>
+                    <Button
+                        transparent
+                        style={{ maxWidth: "100%" }}
+                        disabled={!this.state.editable}
+                        onPress={() => {
+                            this.state.updateList(this.state.id, 'delete', this.state.concentration, this.state.unit)
+                        }}
+                    >
+                        <Icon type='MaterialCommunityIcons' name='minus' />
+                    </Button>
+                </Col>
+            </Row >
         )
     }
 }

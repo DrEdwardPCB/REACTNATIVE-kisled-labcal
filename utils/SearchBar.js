@@ -20,9 +20,10 @@ export default class CustomSearchBar extends React.Component {
             displayData: props.displayData,
             onSelected: props.onSelected,
             //debounce: null,
-            onClear : props.onClear
+            onClear : props.onClear,
+            clearAfterClick:props.clearAfterClick?props.clearAfterClick:false
         }
-        console.log(props)
+        //console.log(props)
     }
     static getDerivedStateFromProps(props, state){
         if(props.displayData!=state.displayData){
@@ -80,11 +81,18 @@ export default class CustomSearchBar extends React.Component {
             return this.state.displayData.map(e => {
                 return (
                     <ListItem key ={e.id} id={e.id} name={e.name} pressHandler={(id, name) => {
-                        this.state.onSelected(id, name)
-                        this.setState({
-                            open: false,
-                            text:name
-                        })
+                        
+                        if(this.state.clearAfterClick){
+                            this.setState({
+                                open: false,
+                            },()=>{this.state.onSelected(id, name)})
+                        }else{
+                            this.setState({
+                                open: false,
+                                text:name
+                            },()=>{this.state.onSelected(id, name)})
+                        }
+                        
                     }} />
                 )
             })
@@ -92,11 +100,17 @@ export default class CustomSearchBar extends React.Component {
             return this.state.displayData.filter(e => e.name.includes(this.state.text)).map(e => {
                 return (
                     <ListItem key ={e.id} id={e.id} name={e.name} pressHandler={(id, name) => {
-                        this.state.onSelected(id, name)
-                        this.setState({
-                            open: false,
-                            text:name
-                        })
+                        //this.state.onSelected(id, name)
+                        if(this.state.clearAfterClick){
+                            this.setState({
+                                open: false,
+                            },()=>{this.state.onSelected(id, name)})
+                        }else{
+                            this.setState({
+                                open: false,
+                                text:name
+                            },()=>{this.state.onSelected(id, name)})
+                        }
                     }} />
                 )
             })
