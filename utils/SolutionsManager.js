@@ -17,8 +17,8 @@ export default class SolutionsManager {
         this.solutionlist = []
         this.chemicallist = []
         this.getData()
-        console.log(this.chemicals)
-        console.log(this.solutions)
+        //console.log(this.chemicals)
+        //console.log(this.solutions)
     }
 
     saveData = async () => {
@@ -38,7 +38,7 @@ export default class SolutionsManager {
             status[1] = false
         }
         if (status.filter(e => e == false).length == 0) {
-            console.log("save success")
+            //console.log("save success")
             return true
         }else{
             return false
@@ -53,7 +53,7 @@ export default class SolutionsManager {
             const value = await AsyncStorage.getItem('solutions');
             if (value !== null) {
                 // We have data!!
-                console.log(value);
+                //console.log(value);
                 this.solutions=JSON.parse(value)
                 status[0] = true
             }
@@ -65,7 +65,7 @@ export default class SolutionsManager {
             const value = await AsyncStorage.getItem('chemicals');
             if (value !== null) {
                 // We have data!!
-                console.log(value);
+                //console.log(value);
                 this.chemicals=JSON.parse(value)
                 status[1] = true
             }
@@ -73,8 +73,8 @@ export default class SolutionsManager {
             // Error retrieving data
             status[1] = false
         }
-        console.log('getting')
-        console.log(status)
+        //console.log('getting')
+        //console.log(status)
         if (status.filter(e => e == false).length == 0) {
             this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name, solute:e.solute } })
             this.solutionlist = this.solutions.map(e => { return { id: e.id, name: e.name} })
@@ -88,15 +88,15 @@ export default class SolutionsManager {
         }
     };
     getChemical(id){
-        console.log(id)
+        //console.log(id)
         var found=this.chemicals.filter(e=>e.id===id)[0]
-        console.log(found)
+        //console.log(found)
         return found
     }
     getSolution(id){
-        console.log(id)
+        //console.log(id)
         var found=this.solutions.filter(e=>e.id===id)[0]
-        console.log(found)
+        //console.log(found)
         return found
     }
     getSolutionList() {
@@ -114,13 +114,80 @@ export default class SolutionsManager {
         }
     }
     verifySolution(obj){
-
+        console.log(obj)
+        if(obj.name===''){
+            return false
+        }
+        if(obj.pH>14||obj.pH<0){
+            return false
+        }
+        if(obj.solvent.length==0){
+            return false
+        }
+        if(Math.round(obj.solvent.map(e=>{
+            if(e.unit=="%v"){
+                return this.getChemical(e.solvent).solutionDensity*parseFloat(e.concentration)
+            }else{
+                return parseFloat(e.concentration)
+            }
+        }).reduce((accum,current)=>{return accum+=current},0))!==100){
+            return false
+        }
+        return true
+        
     }
     async addNewSolution(obj){
-        await this.saveData()
+        if(!this.verifySolution(obj)){
+            return false
+        }
+        //console.log(obj)
+        obj.id=uuid.v4()
+        this.solutions.push(obj)
+        var saved=await this.saveData()
+        if(saved){
+            this.solutionlist=this.solutions.map(e=>{return{id:e.id,name:e.name}})
+            return true
+        }else{
+            return false
+        }
     }
     async editSolution(obj){
-        await this.saveData()
+        console.log(obj)
+        if(!this.verifySolution(obj)){
+            return false
+        }
+        if(!this.verifySolution(obj)){
+            return false
+        }
+        this.solutions=this.solutions.map((e)=>{
+            if(e.id===obj.id){
+                return obj
+            }else{
+                return e
+            }
+        })
+        console.log(this.solutions)
+        var saved=await this.saveData()
+        if(saved){
+            this.solutionlist=this.solutions.map(e=>{return{id:e.id,name:e.name}})
+            return true
+        }else{
+            return false
+        }
+    }
+    async deleteSolution(id){
+        var deletedList=this.solutions.filter(e=>e.id!==id)
+        if(deletedList.length==this.solutions.length){
+            return false
+        }
+        this.solutions=deletedList
+        var saved = await this.saveData()
+        if(saved){
+            this.solutionlist = this.solutions.map(e => { return { id: e.id, name: e.name } })
+            return true
+        }else{
+            return false
+        }
     }
     /**
      * datastructure
@@ -194,7 +261,7 @@ export default class SolutionsManager {
     }
     async deleteChemical(id){
         var deletedList=this.chemicals.filter(e=>e.id!==id)
-        if(deletedList.length==this.chemicals.list){
+        if(deletedList.length==this.chemicals.length){
             return false
         }
         this.chemicals=deletedList

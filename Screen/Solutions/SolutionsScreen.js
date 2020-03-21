@@ -3,12 +3,13 @@ import React from 'react'
 import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Grid, Row, Col, Picker, Form, Item, Input, Label, Textarea, Card, CardItem } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
-import { AsyncStorage, ScrollView, View, Dimensions, Alert, SafeAreaView } from 'react-native'
+import { AsyncStorage, ScrollView, View, Dimensions, Alert, SafeAreaView, Slider } from 'react-native'
 import CustomSearchBar from '../../utils/SearchBar'
 import Modal, { ModalContent, ModalTitle, ModalFooter, ModalButton } from 'react-native-modals'
 import SolutionsManager from '../../utils/SolutionsManager'
 import { Switch, Divider, DataTable } from 'react-native-paper'
 import uuid from 'react-native-uuid'
+
 
 
 export default class Solutions extends React.Component {
@@ -103,25 +104,217 @@ class MainView extends React.Component {
 
 
 class SolutionsMix extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            currentSolution: null,
+            name: '',
+            solvent: [],
+            solute: [],
+            pH: 7,
+            volume: 500,
+            volumeString: '500',
+            volumeunit: 'L',
+        }
+    }
     render() {
         return (
             <Content style={{ padding: 10 }} scrollEnabled={false}>
                 <Grid>
-                    <Row>{/**selector */}
+                    <Row size={1}>{/**selector */}
+                        <Col style={{ height: 57 }}>
+                            <CustomSearchBar
+                                labelText='Solution name'
+                                ref={component => this.mySearchBar = component}
+                                displayData={this.state.searchData}
+                                onSelected={(id, name) => {
+                                    solution=SolutionsManager.getInstance().getSolution(id)
+                                    this.setState({
+                                        currentSolution: solution,
+                                        name: solution.name,
+                                        solvent: solution.solvent,
+                                        solute: solution.id,
+                                        pH: solution.pH,
+                                        volume: 500,
+                                        volumeString: '500',
+                                        volumeunit: 'L',
+                                    })
 
+                                }}
+                                onClear={() => {
+                                    //console.log("clearing")
+                                    this.setState({
+                                        currentSolution: null,
+                                        name: '',
+                                        solvent: [],
+                                        solute: [],
+                                        pH: [],
+                                        volume: 500,
+                                        volumeString: '500',
+                                        volumeunit: 'L',
+                                    })
+                                }}
+                            />
+                        </Col>
                     </Row>
-                    <Row>{/**image */}
+                    <Row size={1}>{/**control panel */}
+                        <Col size={3}>
+                            <Slider
+                                style={{ width: '100%' }}
+                                minimumValue={0}
+                                maximumValue={1000}
+                                value={this.state.volume}
+                                onValueChange={(val) => {
+                                    this.setState({
+                                        volume: Math.round(val),
+                                        volumeString: Math.round(val).toString()
+                                    })
+                                }}
+                            />
+                        </Col>
+                        <Col size={1}>
+                            <Form>
+                                <Item regular>
+                                    <Input
+                                        value={this.state.volumeString}
+                                        onChangeText={(val) => {
+                                            this.setState({ volumeString: val })
+                                        }}
+                                        onBlur={() => {
+                                            if (isNaN(this.state.volumeString)) {
+                                                var tempnum = this.state.volume.toString()
+                                                this.setState({ volumeString: tempnum })
+                                            } else {
+                                                var tempnum = parseInt(this.state.volumeString)
+                                                var tempnumstring = tempnum.toString()
+                                                this.setState({
+                                                    volume: tempnum,
+                                                    volumeString: tempnumstring
+                                                })
+                                            }
 
-                    </Row>
-                    <Row>{/**control panel */}
-
+                                        }}
+                                    />
+                                </Item>
+                            </Form>
+                        </Col>
+                        <Col size={1}>
+                            <Form>
+                                <Item regular>
+                                    <Picker
+                                        style={{ maxWidth: "100%" }}
+                                        selectedValue={this.state.volumeunit}
+                                        mode='dropdown'
+                                        note={false}
+                                        //iosIcon={<Icon name="arrow-down" />}
+                                        onValueChange={(value) => {
+                                            this.setState({ volumeunit: value })
+                                        }}
+                                    >
+                                        <Picker.Item label='µL' value='µL' />
+                                        <Picker.Item label='mL' value='mL' />
+                                        <Picker.Item label='L' value='L' />
+                                    </Picker>
+                                </Item>
+                            </Form>
+                        </Col>
                     </Row>
                     <Row>{/**recipe */}
+                        <Col>
+                            <Text style={{ fontWeight: "bold" }}>Basic Info:</Text>
+                            <DataTable>
+                                <DataTable.Row>
+                                    <DataTable.Title>name:</DataTable.Title>
+                                    <DataTable.Cell>{this.state.name}</DataTable.Cell>
+                                </DataTable.Row>
+                                <DataTable.Row>
+                                    <DataTable.Title>pH:</DataTable.Title>
+                                    <DataTable.Cell>{this.state.pH.toString()}</DataTable.Cell>
+                                </DataTable.Row>
+                            </DataTable>
+                            <Divider />
+                            <Text style={{ fontWeight: "bold" }}>Solvent:</Text>
+                            <DataTable>
 
+                            </DataTable>
+                            <Divider />
+                            <Text style={{ fontWeight: "bold" }}>Solute:</Text>
+                            <DataTable>
+
+                            </DataTable>
+                            
+                        </Col>
                     </Row>
                 </Grid>
             </Content>
         )
+    }
+}
+class SoluteDataTableEntry extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            name:'',
+            molarmass:0,
+            requiredMass: 0,
+            requiredMassUnit: 'g',
+            conc:0,
+            concu:"M",
+            stock:false
+        }
+    }
+    static getDerivedStateFromProps(props, state) {
+        var chemical = SolutionsManager.getInstance().getChemical(props.id)
+        var volumeunit = props.volumeunit
+        var volume = props.volume
+        var concentration = props.concentration
+        var concentrationunit = props.concentrationunit
+        var tunedvolume, tunedconcentration
+        if (volumeunit == "µL") {
+            tunedvolume = volume / 1000 / 1000
+        } else if (volumeunit == "mL") {
+            tunedvolume = volume / 1000
+        } else {
+            tunedvolume = volume
+        }
+        if (concentrationunit == "µM") {
+            tunedconcentration = concentration / 1000 / 1000
+        } else if (concentrationunit == "mM") {
+            tunedconcentration = concentration / 1000
+        } else {
+            tunedconcentration = concentration
+        }
+        var requiredMass = chemical.molarmass * tunedconcentration * tunedvolume
+        if (requiredMass > 0.001) {
+            return {
+                molarmass:chemical.molarmass,
+                name:chemical.name,
+                requiredMass: requiredMass,
+                requiredMassUnit: 'g',
+                stock:true,
+                conc:concentration,
+                concu:concentrationunit
+            }
+        } else {
+            return {
+                molarmass:chemical.molarmass,
+                name:chemical.name,
+                requiredMass: requiredMass * 1000,
+                requiredMassUnit: 'mg',
+                stock:false,
+                conc:concentration,
+                concu:concentrationunit
+            }
+        }
+    }
+    render() {
+        <DataTable.Row>
+            <DataTable.Cell onPress={()=>{if(this.state.stock){alert("using stock solution is suggested")}}}>{this.state.stock?<Icon type='MaterialCommunityIcons' name='information'/>:<Text></Text>}</DataTable.Cell>
+            <DataTable.Cell>{this.state.name}</DataTable.Cell>
+            <DataTable.Cell numeric>{this.state.molarmass}</DataTable.Cell>
+            <DataTable.Cell numeric>{this.state.conc+" "+this.state.concu}</DataTable.Cell>
+            <DataTable.Cell numeric>{this.state.requiredMass+" "+this.state.requiredMassUnit}</DataTable.Cell>
+        </DataTable.Row>
     }
 }
 class ChemicalEditor extends React.Component {
@@ -191,7 +384,8 @@ class ChemicalEditor extends React.Component {
                 <Grid style={{ minHeight: '100%' }}>
                     <Row size={1} style={{ paddingBottom: 10, zIndex: 9999, maxHeight: 67 }}>{/** */}
                         <Col>
-                            <CustomSearchBar labelText='Chemical'
+                            <CustomSearchBar
+                                labelText='Chemical'
                                 ref={component => this.mySearchBar = component}
                                 displayData={this.state.searchData}
                                 onSelected={(id, name) => {
@@ -520,6 +714,7 @@ class SolutionEditor extends React.Component {
         this.state = {
             //currentChemical: null,
             searchData: SolutionsManager.getInstance().getSolutionList(),
+            currentSolution: null,
             editable: false,
             solutionId: uuid.v4(),
             solutionName: '',
@@ -564,14 +759,14 @@ class SolutionEditor extends React.Component {
             />)
         }
         return (
-            <Card style={{ maxHeight: Dimensions.get('window').height * 0.21, height: Dimensions.get('window').height * 0.21, minHeight: Dimensions.get('window').height * 0.21 }}>
+            <Card style={{ maxHeight: Dimensions.get('window').height * 0.19, height: Dimensions.get('window').height * 0.19, minHeight: Dimensions.get('window').height * 0.19 }}>
                 <CardItem style={{ maxHeight: '100%', height: '100%', minHeight: '100%' }}>
                     <ScrollView contentContainerStyle={{ height: this.state.solventHeight }}>
                         <Grid>
                             <Row>
-                                <Col size={2}><Text>Solvent</Text></Col>
+                                <Col size={2}><Text style={{ fontWeight: 'bold' }}>Solvent</Text></Col>
                                 <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Fraction</Text></Col>
-                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Fraction unit</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>unit</Text></Col>
                                 <Col size={0.75} style={{ alignItems: 'flex-end' }}><Icon type='MaterialCommunityIcons' name='plus-minus' /></Col>
                             </Row>
                             {dataRow}
@@ -582,6 +777,7 @@ class SolutionEditor extends React.Component {
                                 <Col size={0.75} style={{ alignItems: 'flex-end' }}>
                                     <Button
                                         transparent
+                                        disabled={!this.state.editable}
                                         onPress={() => { this.setState({ solventModal: true }) }}
                                     >
                                         <Icon type='MaterialCommunityIcons' name='plus' />
@@ -604,13 +800,13 @@ class SolutionEditor extends React.Component {
                 key={uuid.v4()}
                 type='solute'
                 editable={this.state.editable}
-                id={this.state.solutionSolute[i].solvent}
+                id={this.state.solutionSolute[i].solute}
                 unit={this.state.solutionSolute[i].unit}
                 concentration={this.state.solutionSolute[i].concentration}
                 name={Solutename}
                 updateList={(id, operation, concentration, unit) => {
                     if (operation == "delete") {
-                        this.setState({ solutionSolute: this.state.solutionSolute.filter((e) => { return id != e.solvent }) })
+                        this.setState({ solutionSolute: this.state.solutionSolute.filter((e) => { return id != e.solute }) })
                     } else {
                         this.setState({
                             solutionSolute: this.state.solutionSolute.map((e) => {
@@ -620,20 +816,20 @@ class SolutionEditor extends React.Component {
                                 }
                                 return e
                             })
-                        }, console.log(this.state))
+                        }, () => { console.log(this.state.solutionSolute) })
                     }
                 }}
             />)
         }
         return (
-            <Card style={{ maxHeight: Dimensions.get('window').height * 0.21, height: Dimensions.get('window').height * 0.21, minHeight: Dimensions.get('window').height * 0.21 }}>
+            <Card style={{ maxHeight: Dimensions.get('window').height * 0.19, height: Dimensions.get('window').height * 0.19, minHeight: Dimensions.get('window').height * 0.19 }}>
                 <CardItem style={{ maxHeight: '100%', height: '100%', minHeight: '100%' }}>
-                    <ScrollView contentContainerStyle={{ height: this.state.solventHeight }}>
+                    <ScrollView contentContainerStyle={{ height: this.state.soluteHeight }}>
                         <Grid>
                             <Row>
-                                <Col size={2}><Text>Solute</Text></Col>
-                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Concentration</Text></Col>
-                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Concentration unit</Text></Col>
+                                <Col size={2}><Text style={{ fontWeight: 'bold' }}>Solute</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>Conc.</Text></Col>
+                                <Col size={1} style={{ alignItems: 'flex-end' }}><Text>unit</Text></Col>
                                 <Col size={0.75} style={{ alignItems: 'flex-end' }}><Icon type='MaterialCommunityIcons' name='plus-minus' /></Col>
                             </Row>
                             {dataRow1}
@@ -644,6 +840,7 @@ class SolutionEditor extends React.Component {
                                 <Col size={0.75} style={{ alignItems: 'flex-end' }}>
                                     <Button
                                         transparent
+                                        disabled={!this.state.editable}
                                         onPress={() => { this.setState({ soluteModal: true }) }}
                                     >
                                         <Icon type='MaterialCommunityIcons' name='plus' />
@@ -663,20 +860,24 @@ class SolutionEditor extends React.Component {
                     <Row size={1} style={{ paddingBottom: 10, zIndex: 9999, maxHeight: 67 }}>{/** */}
                         <Col>
                             <CustomSearchBar
-                                labelText='Chemical'
+                                labelText='Solution'
                                 ref={component => this.mySearchBar = component}
                                 displayData={this.state.searchData}
                                 onSelected={(id, name) => {
                                     //console.log(id)
                                     var solution = SolutionsManager.getInstance().getSolution(id.toString())
+                                    var solventHeight = (solution.solvent.length + 2) * Dimensions.get('window').height * 0.06
+                                    var soluteHeight = (solution.solute.length + 2) * Dimensions.get('window').height * 0.06
                                     this.setState({
                                         currentSolution: solution,
-                                        solutionid: solution.id,
+                                        solutionId: solution.id,
                                         solutionName: solution.name,
                                         solutionSolvent: solution.solvent,
                                         solutionSolute: solution.solute,
                                         solutionPH: solution.pH.toString(),
-                                        solutionRemarks: solution.remarks
+                                        solutionRemarks: solution.remarks,
+                                        soluteHeight: soluteHeight,
+                                        solventHeight: solventHeight
                                     }, () => {
                                         //console.log(this.state.currentSolution)
                                     })
@@ -703,7 +904,47 @@ class SolutionEditor extends React.Component {
                             <Button
                                 danger
                                 style={{ width: '100%', zIndex: 1 }}
-                                onPress={() => { }}
+                                onPress={() => {
+                                    Alert.alert(
+                                        'Confirm delete',
+                                        'confirm delete the selected chemical',
+                                        [
+                                            {
+                                                text: 'Yes', onPress: async () => {
+                                                    var success = await SolutionsManager.getInstance().deleteSolution(this.state.solutionId)
+                                                    if (success) {
+
+                                                        this.setState({
+                                                            searchData: SolutionsManager.getInstance().getSolutionList(),
+                                                            currentSolution: null,
+                                                            editable: false,
+                                                            solutionId: uuid.v4(),
+                                                            solutionName: '',
+                                                            solutionSolvent: [],
+                                                            solutionSolute: [],
+                                                            solutionPH: '7',
+                                                            solutionRemarks: '',
+                                                            solventModal: false,
+                                                            soluteModal: false,
+                                                            solventHeight: 3 * Dimensions.get('window').height * 0.06,
+                                                            soluteHeight: 3 * Dimensions.get('window').height * 0.06,
+
+                                                        })
+                                                        this.mySearchBar.clearText()
+                                                        alert('operation success')
+                                                    } else {
+                                                        alert("operation failed")
+                                                    }
+
+                                                }
+                                            },
+                                            { text: 'No', onPress: () => console.log('No button clicked'), style: 'cancel' },
+                                        ],
+                                        {
+                                            cancelable: true
+                                        }
+                                    )
+                                }}
                             >
                                 <Text>Remove Solution</Text>
                             </Button>
@@ -711,7 +952,70 @@ class SolutionEditor extends React.Component {
                         <Col>
                             <Button
                                 style={{ width: '100%', zIndex: -1 }}
-                                onPress={() => { }}
+                                onPress={async () => {
+                                    if (this.state.currentSolution == null) {
+                                        var status = await SolutionsManager.getInstance().addNewSolution({
+                                            id: this.state.solutionId,
+                                            name: this.state.solutionName,
+                                            solvent: this.state.solutionSolvent,
+                                            solute: this.state.solutionSolute,
+                                            pH: parseFloat(this.state.solutionPH),
+                                            remarks: this.state.solutionRemarks,
+                                        })
+                                        if (status) {
+
+                                            this.setState({
+                                                searchData: SolutionsManager.getInstance().getSolutionList(),
+                                                currentSolution: null,
+                                                editable: false,
+                                                solutionId: uuid.v4(),
+                                                solutionName: '',
+                                                solutionSolvent: [],
+                                                solutionSolute: [],
+                                                solutionPH: '7',
+                                                solutionRemarks: '',
+                                                solventModal: false,
+                                                soluteModal: false,
+                                                solventHeight: 3 * Dimensions.get('window').height * 0.06,
+                                                soluteHeight: 3 * Dimensions.get('window').height * 0.06,
+                                            })
+                                            this.mySearchBar.clearText()
+                                            alert('operation success')
+                                        } else {
+                                            alert('operation failed')
+                                        }
+                                    } else {
+                                        var status = await SolutionsManager.getInstance().editSolution({
+                                            id: this.state.solutionId,
+                                            name: this.state.solutionName,
+                                            solvent: this.state.solutionSolvent,
+                                            solute: this.state.solutionSolute,
+                                            pH: parseFloat(this.state.solutionPH),
+                                            remarks: this.state.solutionRemarks,
+                                        })
+                                        if (status) {
+                                            this.setState({
+                                                searchData: SolutionsManager.getInstance().getSolutionList(),
+                                                currentSolution: null,
+                                                editable: false,
+                                                solutionId: uuid.v4(),
+                                                solutionName: '',
+                                                solutionSolvent: [],
+                                                solutionSolute: [],
+                                                solutionPH: '7',
+                                                solutionRemarks: '',
+                                                solventModal: false,
+                                                soluteModal: false,
+                                                solventHeight: 3 * Dimensions.get('window').height * 0.06,
+                                                soluteHeight: 3 * Dimensions.get('window').height * 0.06,
+                                            })
+                                            this.mySearchBar.clearText()
+                                            alert('operation success')
+                                        } else {
+                                            alert('operation failed')
+                                        }
+                                    }
+                                }}
                             >
                                 <Text>{this.state.currentSolution == null ? "Add Solution" : "Save edited Solution"}</Text>
                             </Button>
@@ -744,11 +1048,44 @@ class SolutionEditor extends React.Component {
                             </Row>
                             <Divider style={{ marginVertical: 2 }} />
                             <Row size={4}>
-                                <Card style={{ height: '100%' }}>
-                                    <CardItem>
-                                        <ScrollView></ScrollView>
-                                    </CardItem>
-                                </Card>
+                                <View style={{ maxHeight: Dimensions.get('window').height * 0.19, height: Dimensions.get('window').height * 0.19, minHeight: Dimensions.get('window').height * 0.19, width: '100%' }}>
+
+                                    <ScrollView>
+                                        <Form>
+                                            <Item style={{ padding: 10 }} fixedLabel>
+                                                <Label>name</Label>
+                                                <Input
+                                                    editable={this.state.editable}
+                                                    value={this.state.solutionName}
+                                                    onChangeText={(val) => { this.setState({ solutionName: val }) }}
+                                                />
+                                            </Item>
+                                            <Item style={{ padding: 10 }} fixedLabel>
+                                                <Label>pH</Label>
+                                                <Input
+                                                    editable={this.state.editable}
+                                                    value={this.state.solutionPH}
+                                                    onChangeText={(val) => { this.setState({ solutionPH: val }) }}
+                                                />
+                                            </Item>
+                                            <Item style={{ padding: 10 }} stackedLabel
+                                            //disabled={!this.state.editable}
+                                            >
+                                                <Label>Remarks</Label>
+                                                <Textarea
+
+                                                    disabled={!this.state.editable}
+                                                    rowSpan={5}
+                                                    bordered
+                                                    style={{ width: '100%' }}
+                                                    value={this.state.solutionRemarks}
+                                                    onChangeText={(val) => { this.setState({ solutionRemarks: val }) }}
+                                                />
+                                            </Item>
+                                        </Form>
+                                    </ScrollView>
+
+                                </View>
                             </Row>
                         </Col>
                     </Row>
@@ -778,12 +1115,14 @@ class SolutionEditor extends React.Component {
                                 onSelected={(id, name) => {
                                     var templist = this.state.solutionSolvent.map(e => e)
                                     templist.push({ solvent: id, concentration: "1", unit: "%w" })
+                                    var lengths = (templist.length + 2) * Dimensions.get('window').height * 0.06
+                                    console.log(lengths)
+
                                     this.setState({
                                         solutionSolvent: templist,
-                                        solventModal: false
-                                    }, () => {
-                                        this.setState({ solventHeight: (this.state.solutionSolvent.length + 2) * Dimensions.get('window').height * 0.06 })
-                                    })
+                                        solventModal: false,
+                                        solventHeight: lengths
+                                    }, () => { console.log(this.state.solventHeight) })
                                 }}
                             />
                         </View>
@@ -812,10 +1151,14 @@ class SolutionEditor extends React.Component {
                                 onSelected={(id, name) => {
                                     var templist = this.state.solutionSolute.map(e => e)
                                     templist.push({ solute: id, concentration: "1", unit: "M" })
+                                    var lengths = (templist.length + 2) * Dimensions.get('window').height * 0.06
+                                    console.log(lengths)
+
                                     this.setState({
                                         solutionSolute: templist,
-                                        soluteModal: false
-                                    }, () => { this.setState({ soluteHeight: (this.state.solutionSolute.length + 2) * Dimensions.get('window').height * 0.06 }) })
+                                        soluteModal: false,
+                                        soluteHeight: lengths
+                                    }, () => { console.log(this.state.soluteHeight) })
                                 }}
                             />
                         </View>
@@ -837,7 +1180,7 @@ class Datarow extends React.Component {
             editable: props.editable,
             type: props.type
         }
-        console.log(props)
+        //console.log(props)
     }
     /*static getDerivedStateFromProps(props, state) {
         if (props.concentration != state.concentration || props.unit != state.unit) {
@@ -878,6 +1221,7 @@ class Datarow extends React.Component {
                     //iosIcon={<Icon name="arrow-down" />}
                     onValueChange={(value) => {
                         this.setState({ unit: value }, () => {
+                            //console.log(this.state)
                             this.state.updateList(this.state.id, 'edit', this.state.concentration, this.state.unit)
                         })
                     }}
