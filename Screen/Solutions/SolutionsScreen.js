@@ -111,156 +111,365 @@ class SolutionsMix extends React.Component {
             name: '',
             solvent: [],
             solute: [],
-            pH: 7,
+            pH: '',
             volume: 500,
             volumeString: '500',
-            volumeunit: 'L',
+            volumeunit: 'mL',
+            searchData: SolutionsManager.getInstance().getSolutionList(),
+            disabled: true,
+            OP: '',
+            mOsmL:''
+        }
+    }
+    static getDerivedStateFromProps(props, state) {
+        console.log('calculating')
+        if (state.currentSolution == null) {
+            console.log('notcal')
+            return {OP:''}
+        } else {
+            console.log('calculatiog')
+            var mosm = state.solute.map(e => {
+                var chemical = SolutionsManager.getInstance().getChemical(e.solute)
+                var concentraton = parseFloat(e.concentration)
+                var actualconc
+                if (e.unit == 'M') {
+                    actualconc = concentraton
+                } else if (e.unit == "mM") {
+                    actualconc = concentration / 1000
+                } else {
+                    actualconc = concentration / 1000 / 1000
+                }
+                return actualconc * chemical.dissociationMultiplier
+            }).reduce((accum, curr) => {
+                return accum += curr
+            }, 0) 
+            var op=mosm* 0.0821 * 298
+            return {OP:op.toFixed(2), mOsmL:(mosm*1000).toFixed(0)}
+        }
+    }
+        componentDidMount() {
+            //console.log('=========================')
+            //console.log(this.state.searchData)
+            if (this.state.searchData.error != undefined) {
+                setTimeout(() => {
+                    this.setState({ searchData: SolutionsManager.getInstance().getSolutionList() })
+                }, 500)
+            } else {
+                this.setState({ disabled: false })
+                //  console.log('done')
+            }
+        }
+        componentDidUpdate() {
+            // console.log('=========================')
+            //console.log(this.state.searchData)
+            if (this.state.searchData.error != undefined) {
+                setTimeout(() => {
+                    this.setState({ searchData: SolutionsManager.getInstance().getSolutionList() })
+                }, 500)
+            } else {
+                this.setState({ disabled: false })
+                //  console.log('done')
+            }
+        }
+        shouldComponentUpdate(nextprops, nextstate) {
+            if (this.state.disabled == false
+                && nextstate.currentSolution == this.state.currentSolution
+                && nextstate.name == this.state.name
+                && nextstate.solvent == this.state.solvent
+                && nextstate.solute == this.state.solute
+                && nextstate.pH == this.state.pH
+                && nextstate.volume == this.state.volume
+                && nextstate.volumeString == this.state.volumeString
+                && nextstate.volumeunit == this.state.volumeunit
+                && nextstate.searchData == this.state.searchData) {
+
+                return false
+            } else {
+                return true
+            }
+        }
+        renderSolventEntry() {
+            if (this.state.solute.length == 0) {
+                return
+            }
+            console.log('this.state.solute')
+            var entries = []
+            for (var i = 0; i < this.state.solvent.length; i++) {
+                //console.log('rendering1')
+                entries.push(<SolventDataTableEntry key={uuid.v4()} id={this.state.solvent[i].solvent} volumeunit={this.state.volumeunit} volume={this.state.volume} concentration={this.state.solvent[i].concentration} concentrationunit={this.state.solvent[i].unit} />)
+                //console.log('rendering2')
+            }
+            return (
+                <Grid>
+                    <Row>
+                        <Col><Text style={{ fontWeight: 'bold' }}>name</Text></Col>
+                        <Col style={{ alignItems: 'flex-end' }}><Text style={{ fontWeight: 'bold' }}>g/cm^3</Text></Col>
+                        <Col style={{ alignItems: 'center' }}><Text style={{ fontWeight: 'bold' }}>Fraction</Text></Col>
+                        <Col style={{ alignItems: 'flex-end' }}><Text style={{ fontWeight: 'bold' }}>Vol.</Text></Col>
+                    </Row>
+                    {entries}
+                </Grid>)
+        }
+        renderSoluteEntry() {
+            //console.log('rendering start')
+            if (this.state.solute.length == 0) {
+                return
+            }
+            console.log('this.state.solute')
+            var entries = []
+            for (var i = 0; i < this.state.solute.length; i++) {
+                //console.log('rendering1')
+                entries.push(<SoluteDataTableEntry key={uuid.v4()} id={this.state.solute[i].solute} volume={this.state.volume} volumeunit={this.state.volumeunit} concentration={this.state.solute[i].concentration} concentrationunit={this.state.solute[i].unit} />)
+                //console.log('rendering2')
+            }
+            return (
+                <Grid>
+                    <Row>
+                        <Col>
+                            <Text style={{ fontWeight: 'bold' }}>Info</Text>
+                        </Col>
+                        <Col><Text style={{ fontWeight: 'bold' }}>name</Text></Col>
+                        <Col style={{ alignItems: 'flex-end' }}><Text style={{ fontWeight: 'bold' }}>g/mol</Text></Col>
+                        <Col style={{ alignItems: 'center' }}><Text style={{ fontWeight: 'bold' }}>conc.</Text></Col>
+                        <Col style={{ alignItems: 'flex-end' }}><Text style={{ fontWeight: 'bold' }}>mass</Text></Col>
+                    </Row>
+                    {entries}
+                </Grid>)
+        }
+        render() {
+            return (
+                <Content style={{ padding: 10 }} >
+                    <Grid>
+                        <Row size={1} style={{ zIndex: 1000 }}>{/**selector */}
+                            <Col style={{ height: 57 }}>
+                                <CustomSearchBar
+                                    disabled={this.state.disabled}
+                                    labelText='Solution name'
+                                    ref={component => this.mySearchBar = component}
+                                    displayData={this.state.searchData}
+                                    onSelected={(id, name) => {
+                                        var solution = SolutionsManager.getInstance().getSolution(id)
+                                        this.setState({
+                                            currentSolution: solution,
+                                            name: solution.name,
+                                            solvent: solution.solvent,
+                                            solute: solution.solute,
+                                            pH: solution.pH,
+                                            volume: 500,
+                                            volumeString: '500',
+                                            volumeunit: 'mL',
+                                        }, () => { console.log('setstate completed') })
+
+                                    }}
+                                    onClear={() => {
+                                        //console.log("clearing")
+                                        this.setState({
+                                            currentSolution: null,
+                                            name: '',
+                                            solvent: [],
+                                            solute: [],
+                                            pH: [],
+                                            volume: 500,
+                                            volumeString: '500',
+                                            volumeunit: 'mL',
+                                        })
+                                    }}
+                                />
+                            </Col>
+                        </Row>
+
+                        <Text style={{ fontWeight: "bold", marginTop: 3 }}>Volume:</Text>
+
+                        <Row size={1}>{/**control panel */}
+                            <Col size={3} style={{ justifyContent: 'center' }}>
+                                <Slider
+                                    style={{ width: '100%' }}
+                                    minimumValue={0}
+                                    maximumValue={1000}
+                                    value={this.state.volume}
+                                    onValueChange={(val) => {
+                                        this.setState({
+                                            volume: Math.round(val),
+                                            volumeString: Math.round(val).toString()
+                                        })
+                                    }}
+                                />
+                            </Col>
+                            <Col size={1} style={{ margin: 3 }}>
+                                <Form>
+                                    <Item rounded style={{ alignContent: 'center', paddingLeft: 0 }}>
+                                        <Input
+                                            style={{ textAlign: 'center', marginLeft: 0 }}
+                                            value={this.state.volumeString}
+                                            onChangeText={(val) => {
+                                                this.setState({ volumeString: val })
+                                            }}
+                                            onBlur={() => {
+                                                if (isNaN(this.state.volumeString)) {
+                                                    var tempnum = this.state.volume.toString()
+                                                    this.setState({ volumeString: tempnum })
+                                                } else {
+                                                    var tempnum = parseInt(this.state.volumeString)
+                                                    var tempnumstring = tempnum.toString()
+                                                    this.setState({
+                                                        volume: tempnum,
+                                                        volumeString: tempnumstring
+                                                    })
+                                                }
+
+                                            }}
+                                        />
+                                    </Item>
+                                </Form>
+                            </Col>
+                            <Col size={1.4} style={{ margin: 3 }}>
+                                <Form>
+                                    <Item rounded style={{ height: '100%' }}>
+                                        <Picker
+                                            style={{ maxWidth: "100%" }}
+                                            selectedValue={this.state.volumeunit}
+                                            mode='dropdown'
+                                            note={false}
+                                            iosIcon={<Icon name="arrow-down" style={{ fontSize: 20 }} />}
+                                            onValueChange={(value) => {
+                                                this.setState({ volumeunit: value })
+                                            }}
+                                        >
+                                            <Picker.Item label='µL' value='µL' />
+                                            <Picker.Item label='mL' value='mL' />
+                                            <Picker.Item label='L' value='L' />
+                                        </Picker>
+                                    </Item>
+                                </Form>
+                            </Col>
+                        </Row>
+                        <Row>{/**recipe */}
+                            <Col>
+                                <Text style={{ fontWeight: "bold" }}>Basic Info:</Text>
+                                <DataTable>
+                                    <DataTable.Header>
+                                        <DataTable.Title>name:</DataTable.Title>
+                                        <DataTable.Title numeric>pH:</DataTable.Title>
+                                        <DataTable.Title numeric>OP(RTP*):</DataTable.Title>
+                                        <DataTable.Title numeric>mOsm/L:</DataTable.Title>
+                                    </DataTable.Header>
+                                    <DataTable.Row>
+                                        <DataTable.Cell>{this.state.name}</DataTable.Cell>
+                                        <DataTable.Cell numeric>{this.state.pH}</DataTable.Cell>
+                                        <DataTable.Cell numeric>{this.state.OP}</DataTable.Cell>
+                                        <DataTable.Cell numeric>{this.state.mOsmL}</DataTable.Cell>
+                                    </DataTable.Row>
+                                </DataTable>
+                                <Divider />
+                                <Grid>
+                                    <Row>
+                                        <Col size={1} style={{ justifyContent: 'center' }}>
+                                            <Text style={{ fontWeight: "bold" }}>Solvent:</Text>
+                                        </Col>
+                                        <Col size={5} style={{ alignItems: 'flex-start' }}>
+                                            <Button
+                                                transparent
+                                                onPress={() => { alert("The displayed volume of solvent are the volume required to mix a solution without solute, Do try to prepare solvent with the suggested volume ratio, then add to solute mixture to make up to the stated volume") }}
+                                            >
+                                                <Icon type='MaterialCommunityIcons' name='information' />
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Grid>
+                                <Card style={{ minHeight: Dimensions.get('window').height * 0.17 }}>
+                                    <CardItem>
+                                        {this.renderSolventEntry()}
+                                    </CardItem>
+                                </Card>
+                                <Divider />
+                                <Grid>
+                                    <Row>
+                                        <Col size={1} style={{ justifyContent: 'center' }}>
+                                            <Text style={{ fontWeight: "bold" }}>Solute:</Text>
+                                        </Col>
+                                        <Col size={5} style={{ alignItems: 'flex-start' }}>
+                                            <Button
+                                                transparent
+                                                onPress={() => { alert("for some hygroscopic chemical, do measure its weight fast") }}
+                                            >
+                                                <Icon type='MaterialCommunityIcons' name='information' />
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Grid>
+                                <Card style={{ minHeight: Dimensions.get('window').height * 0.17 }}>
+                                    <CardItem>
+
+                                        {this.renderSoluteEntry()}
+
+                                    </CardItem>
+                                </Card>
+
+                            </Col>
+                        </Row>
+                    </Grid>
+                </Content>
+            )
+        }
+    }
+//<SolventDataTableEntry id='' volumeunit='' volume={} concentration={} concentrationunit='' >
+class SolventDataTableEntry extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            name: '',
+            requiredVolume: 0,
+            volumeunit: props.volumeunit,
+            density: 1,
+            conc: 100,
+            concu: '%w'
+        }
+    }
+    static getDerivedStateFromProps(props, state) {
+        var conc = props.concentration
+        var concu = props.concentrationunit
+        var vol = props.volume
+        var volu = props.volumeunit
+        var solvent = SolutionsManager.getInstance().getChemical(props.id)
+        var density = solvent.solutionDensity
+        var requiredVolume = 0
+        if (concu == '%v') {
+            requiredVolume = conc / 100 * vol
+        } else {
+            requiredVolume = conc * density / 100 * vol
+        }
+        return {
+            name: solvent.name,
+            requiredVolume: requiredVolume,
+            density: density,
+            conc: conc,
+            concu: concu,
+            volumeunit: volu
         }
     }
     render() {
         return (
-            <Content style={{ padding: 10 }} scrollEnabled={false}>
-                <Grid>
-                    <Row size={1}>{/**selector */}
-                        <Col style={{ height: 57 }}>
-                            <CustomSearchBar
-                                labelText='Solution name'
-                                ref={component => this.mySearchBar = component}
-                                displayData={this.state.searchData}
-                                onSelected={(id, name) => {
-                                    solution=SolutionsManager.getInstance().getSolution(id)
-                                    this.setState({
-                                        currentSolution: solution,
-                                        name: solution.name,
-                                        solvent: solution.solvent,
-                                        solute: solution.id,
-                                        pH: solution.pH,
-                                        volume: 500,
-                                        volumeString: '500',
-                                        volumeunit: 'L',
-                                    })
-
-                                }}
-                                onClear={() => {
-                                    //console.log("clearing")
-                                    this.setState({
-                                        currentSolution: null,
-                                        name: '',
-                                        solvent: [],
-                                        solute: [],
-                                        pH: [],
-                                        volume: 500,
-                                        volumeString: '500',
-                                        volumeunit: 'L',
-                                    })
-                                }}
-                            />
-                        </Col>
-                    </Row>
-                    <Row size={1}>{/**control panel */}
-                        <Col size={3}>
-                            <Slider
-                                style={{ width: '100%' }}
-                                minimumValue={0}
-                                maximumValue={1000}
-                                value={this.state.volume}
-                                onValueChange={(val) => {
-                                    this.setState({
-                                        volume: Math.round(val),
-                                        volumeString: Math.round(val).toString()
-                                    })
-                                }}
-                            />
-                        </Col>
-                        <Col size={1}>
-                            <Form>
-                                <Item regular>
-                                    <Input
-                                        value={this.state.volumeString}
-                                        onChangeText={(val) => {
-                                            this.setState({ volumeString: val })
-                                        }}
-                                        onBlur={() => {
-                                            if (isNaN(this.state.volumeString)) {
-                                                var tempnum = this.state.volume.toString()
-                                                this.setState({ volumeString: tempnum })
-                                            } else {
-                                                var tempnum = parseInt(this.state.volumeString)
-                                                var tempnumstring = tempnum.toString()
-                                                this.setState({
-                                                    volume: tempnum,
-                                                    volumeString: tempnumstring
-                                                })
-                                            }
-
-                                        }}
-                                    />
-                                </Item>
-                            </Form>
-                        </Col>
-                        <Col size={1}>
-                            <Form>
-                                <Item regular>
-                                    <Picker
-                                        style={{ maxWidth: "100%" }}
-                                        selectedValue={this.state.volumeunit}
-                                        mode='dropdown'
-                                        note={false}
-                                        //iosIcon={<Icon name="arrow-down" />}
-                                        onValueChange={(value) => {
-                                            this.setState({ volumeunit: value })
-                                        }}
-                                    >
-                                        <Picker.Item label='µL' value='µL' />
-                                        <Picker.Item label='mL' value='mL' />
-                                        <Picker.Item label='L' value='L' />
-                                    </Picker>
-                                </Item>
-                            </Form>
-                        </Col>
-                    </Row>
-                    <Row>{/**recipe */}
-                        <Col>
-                            <Text style={{ fontWeight: "bold" }}>Basic Info:</Text>
-                            <DataTable>
-                                <DataTable.Row>
-                                    <DataTable.Title>name:</DataTable.Title>
-                                    <DataTable.Cell>{this.state.name}</DataTable.Cell>
-                                </DataTable.Row>
-                                <DataTable.Row>
-                                    <DataTable.Title>pH:</DataTable.Title>
-                                    <DataTable.Cell>{this.state.pH.toString()}</DataTable.Cell>
-                                </DataTable.Row>
-                            </DataTable>
-                            <Divider />
-                            <Text style={{ fontWeight: "bold" }}>Solvent:</Text>
-                            <DataTable>
-
-                            </DataTable>
-                            <Divider />
-                            <Text style={{ fontWeight: "bold" }}>Solute:</Text>
-                            <DataTable>
-
-                            </DataTable>
-                            
-                        </Col>
-                    </Row>
-                </Grid>
-            </Content>
+            <Row>
+                <Col style={{ justifyContent: 'center' }}><Text>{this.state.name}</Text></Col>
+                <Col style={{ alignItems: 'flex-end', justifyContent: 'center' }}><Text>{this.state.density.toFixed(2)}</Text></Col>
+                <Col style={{ alignItems: 'center', justifyContent: 'center' }}><Text>{this.state.conc + " " + this.state.concu}</Text></Col>
+                <Col style={{ alignItems: 'flex-end', justifyContent: 'center' }}><Text>{this.state.requiredVolume.toFixed(4) + " " + this.state.volumeunit}</Text></Col>
+            </Row>
         )
     }
 }
+//<SoluteDataTableEntry key={uuid.v4()} id='' volume={number} volumeunit='' concentration={} concentrationunit=''/>
 class SoluteDataTableEntry extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            name:'',
-            molarmass:0,
+            name: '',
+            molarmass: 0,
             requiredMass: 0,
             requiredMassUnit: 'g',
-            conc:0,
-            concu:"M",
-            stock:false
+            conc: 0,
+            concu: "M",
+            stock: false
         }
     }
     static getDerivedStateFromProps(props, state) {
@@ -285,36 +494,48 @@ class SoluteDataTableEntry extends React.Component {
             tunedconcentration = concentration
         }
         var requiredMass = chemical.molarmass * tunedconcentration * tunedvolume
-        if (requiredMass > 0.001) {
+        if (requiredMass > 0.01) {
             return {
-                molarmass:chemical.molarmass,
-                name:chemical.name,
+                molarmass: chemical.molarmass,
+                name: chemical.name,
                 requiredMass: requiredMass,
                 requiredMassUnit: 'g',
-                stock:true,
-                conc:concentration,
-                concu:concentrationunit
+                stock: false,
+                conc: concentration,
+                concu: concentrationunit
             }
         } else {
             return {
-                molarmass:chemical.molarmass,
-                name:chemical.name,
+                molarmass: chemical.molarmass,
+                name: chemical.name,
                 requiredMass: requiredMass * 1000,
                 requiredMassUnit: 'mg',
-                stock:false,
-                conc:concentration,
-                concu:concentrationunit
+                stock: true,
+                conc: concentration,
+                concu: concentrationunit
             }
         }
     }
     render() {
-        <DataTable.Row>
-            <DataTable.Cell onPress={()=>{if(this.state.stock){alert("using stock solution is suggested")}}}>{this.state.stock?<Icon type='MaterialCommunityIcons' name='information'/>:<Text></Text>}</DataTable.Cell>
-            <DataTable.Cell>{this.state.name}</DataTable.Cell>
-            <DataTable.Cell numeric>{this.state.molarmass}</DataTable.Cell>
-            <DataTable.Cell numeric>{this.state.conc+" "+this.state.concu}</DataTable.Cell>
-            <DataTable.Cell numeric>{this.state.requiredMass+" "+this.state.requiredMassUnit}</DataTable.Cell>
-        </DataTable.Row>
+        return (
+            <Row>
+                <Col>
+                    <Button
+                        transparent
+                        disabled={!this.state.stock}
+                        onPress={
+                            () => {
+                                if (this.state.stock) { alert("using stock solution is suggested") }
+                            }}>
+                        {this.state.stock ? <Icon type='MaterialCommunityIcons' name='information' /> : <Text></Text>}
+                    </Button>
+                </Col>
+                <Col style={{ justifyContent: 'center' }}><Text>{this.state.name}</Text></Col>
+                <Col style={{ alignItems: 'flex-end', justifyContent: 'center' }}><Text>{this.state.molarmass.toFixed(2)}</Text></Col>
+                <Col style={{ alignItems: 'center', justifyContent: 'center' }}><Text>{this.state.conc + " " + this.state.concu}</Text></Col>
+                <Col style={{ alignItems: 'flex-end', justifyContent: 'center' }}><Text>{this.state.requiredMass.toFixed(4) + " " + this.state.requiredMassUnit}</Text></Col>
+            </Row>
+        )
     }
 }
 class ChemicalEditor extends React.Component {
@@ -447,7 +668,8 @@ class ChemicalEditor extends React.Component {
                                                             molarMassUnit: 'g/mol',
                                                             chemicalRemarks: '',
                                                             chemicalSolutionDensity: 'n/a',
-                                                            chemicalDissocationMultiplier: '1'
+                                                            chemicalDissocationMultiplier: '1',
+                                                            editable: false,
 
                                                         })
                                                         this.mySearchBar.clearText()
@@ -494,7 +716,8 @@ class ChemicalEditor extends React.Component {
                                                 molarMassUnit: 'g/mol',
                                                 chemicalRemarks: '',
                                                 chemicalSolutionDensity: 'n/a',
-                                                chemicalDissocationMultiplier: '1'
+                                                chemicalDissocationMultiplier: '1',
+                                                editable: false,
                                             })
                                             this.mySearchBar.clearText()
                                             alert('operation success')
@@ -521,7 +744,8 @@ class ChemicalEditor extends React.Component {
                                                 molarMassUnit: 'g/mol',
                                                 chemicalRemarks: '',
                                                 chemicalSolutionDensity: 'n/a',
-                                                chemicalDissocationMultiplier: '1'
+                                                chemicalDissocationMultiplier: '1',
+                                                editable: false,
                                             })
                                             this.mySearchBar.clearText()
                                             alert('operation success')
@@ -655,7 +879,7 @@ class ChemicalEditor extends React.Component {
                                                         value={this.state.chemicalSolutionDensity}
                                                         onChangeText={(val) => { this.setState({ chemicalSolutionDensity: val }) }}
                                                         onBlur={() => {
-                                                            if (isNaN(this.state.solutionDensity)) {
+                                                            if (isNaN(this.state.chemicalSolutionDensity)) {
                                                                 if (this.state.chemicalIsSolute) {
                                                                     this.setState({ chemicalSolutionDensity: 'n/a' })
                                                                 } else {

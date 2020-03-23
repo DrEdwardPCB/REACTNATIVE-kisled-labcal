@@ -21,13 +21,15 @@ export default class CustomSearchBar extends React.Component {
             onSelected: props.onSelected,
             //debounce: null,
             onClear : props.onClear,
-            clearAfterClick:props.clearAfterClick?props.clearAfterClick:false
+            clearAfterClick:props.clearAfterClick?props.clearAfterClick:false,
+            disabled:props.disabled?true:false
         }
         //console.log(props)
     }
     static getDerivedStateFromProps(props, state){
-        if(props.displayData!=state.displayData){
-            return {displayData:props.displayData}
+        if(props.displayData!=state.displayData||props.disabled!=state.disabled){
+            console.log(props.displayData)
+            return {displayData:props.displayData, disabled:props.disabled}
         }else{
             return null
         }
@@ -127,6 +129,7 @@ export default class CustomSearchBar extends React.Component {
                         })} />
 
                         <Button rounded transparent
+                            disabled={this.state.disabled}
                             style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', height: '100%', aspectRatio: 1 }}
                             onPress={() => {
                                 this.setState({
@@ -137,6 +140,7 @@ export default class CustomSearchBar extends React.Component {
                             {this.state.open ? <Icon type='Ionicons' name='ios-arrow-up' style={{ fontSize: 24 }} /> : <Icon type='Ionicons' name='ios-arrow-down' style={{ fontSize: 24 }} />}
                         </Button>
                         <Button rounded
+                            disabled={this.state.disabled}
                             style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', height: '100%', aspectRatio: 1 }}
                             onPress={() => {
                                 this.setState({
