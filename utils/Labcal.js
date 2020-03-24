@@ -23,6 +23,12 @@ export default class LABCAL {
 
     static calculatorpage = 'Calculator '
     static graphplotterpage = 'Graph Plotter'
+    //Settings Screen
+    static SETTINGSSCREEN = 'settingsscreen'
+
+    static SETTINGSSCREENdn ='Settings'
+    static memorymanagementpage = 'memory management'
+    static statementpage = 'statement'
 
     //not yet implemented
     static MACHINELEARNINGSCREEN = 'machinelearningscreen'
@@ -52,13 +58,13 @@ export default class LABCAL {
             displayname: LABCAL.SCIENTIFICCALCULATORSCREENdn,
             //component: ScientificCalculator
         },
-        /*{
-            id: LABCAL.BIOCHEMISTRYSCREEN,
-            icon: 'chemical-weapon',//represent on drawer
-            color: 'lime',//represent on drawer
-            routename: LABCAL.SCIENTIFICCALCULATORSCREEN,
-            displayname: LABCAL.BIOCHEMISTRYSCREENdn,
+        {
+            id: LABCAL.SETTINGSSCREEN,
+            icon: 'settings-outline',//represent on drawer
+            color: 'dimgray',//represent on drawer
+            routename: LABCAL.SETTINGSSCREEN,
+            displayname: LABCAL.SETTINGSSCREENdn,
             //component: ScientificCalculator
-        },*/
+        },
     ]
 }

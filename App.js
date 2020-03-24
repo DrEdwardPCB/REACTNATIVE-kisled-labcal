@@ -6,6 +6,7 @@ import Solutions from './Screen/Solutions/SolutionsScreen'
 import ScientificCalculator from './Screen/ScientificCalculator/ScientificCalculatorScreen'
 import LABCAL from './utils/Labcal'
 import SolutionsManager from './utils/SolutionsManager';
+import Settings from './Screen/Settings/SettingScreen'
 
 export default class App extends React.Component {
   constructor(){
@@ -30,6 +31,7 @@ export default class App extends React.Component {
           }
           <Stack.Screen name={LABCAL.SOLUTIONSSCREEN} options={{headerShown:false}} component={Solutions}/>
           <Stack.Screen name={LABCAL.SCIENTIFICCALCULATORSCREEN} options={{headerShown:false}} component={ScientificCalculator}/>
+          <Stack.Screen name={LABCAL.SETTINGSSCREEN} options={{headerShown:false}} component={Settings}/>
         </Stack.Navigator>
       </NavigationContainer>
 

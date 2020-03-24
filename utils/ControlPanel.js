@@ -33,6 +33,24 @@ export default class ControlPanel extends React.Component {
                 ],
                 updatePage: props.updatePage
             }
+        }else if(this.props.currentApp == LABCAL.SETTINGSSCREENdn){
+            this.state = {
+                currentApp: props.currentApp,
+                currentPage: props.currentPage,
+                navigation: props.navigation,
+                closeHandler: props.closeHandler,
+                FlatListItem: [
+                    {
+                        id: 1,
+                        name: LABCAL.statementpage
+                    },
+                    {
+                        id: 2,
+                        name: LABCAL.memorymanagementpage
+                    },
+                ],
+                updatePage: props.updatePage
+            }
         } else {
             this.state = {
                 currentApp: props.currentApp,

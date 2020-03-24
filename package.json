@@ -22,6 +22,7 @@
     "react-native-drawer": "^2.5.1",
     "react-native-easy-markdown": "^2.0.0",
     "react-native-gesture-handler": "~1.5.0",
+    "react-native-katex": "^0.3.0",
     "react-native-modals": "^0.19.9",
     "react-native-paper": "^3.6.0",
     "react-native-plotly": "^4.0.0",
@@ -30,7 +31,8 @@
     "react-native-screens": "2.0.0-alpha.12",
     "react-native-uuid": "^1.4.9",
     "react-native-vector-icons": "^6.6.0",
-    "react-native-web": "~0.11.7"
+    "react-native-web": "~0.11.7",
+    "react-native-webview": "^9.0.1"
   },
   "devDependencies": {
     "babel-preset-expo": "~8.0.0",
