@@ -3,9 +3,15 @@ import React from 'react'
 import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Item, Grid, Row, Col, DeckSwiper, Card, CardItem } from 'native-base'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
-import { AsyncStorage, Dimensions } from 'react-native'
+import { AsyncStorage, Dimensions, View } from 'react-native'
 import { WebView } from 'react-native-webview';
 import uuid from "react-native-uuid";
+import Katex from 'react-native-katex';
+import { create, all } from 'mathjs'
+import { Switch, Divider } from 'react-native-paper'
+import MathIcon from '../../utils/Mathicon'
+const config = {}
+const MathJS = create(all, config)
 
 
 export default class ScientificCalculator extends React.Component {
@@ -187,18 +193,94 @@ class Calculator extends React.Component {
         )
     }
 }
+
+const inlineStyle = `
+html, body {
+  display: flex;
+  background-color: #fafafa;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.katex {
+  font-size: 4em;
+  margin: 0;
+  display: flex;
+}
+`;
+
 class Display extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
             mathArray: props.mathArray,
-            mathString: "",
+            katexString: "",
             ans: "",
+            cursor: '',
+            isLatex: true,
         }
     }
+    componentDidMount() {
+        this.interval = setInterval(() => {
+            if (this.state.cursor == '') {
+                this.setState({ cursor: '|' })
+            } else {
+                this.setState({ cursor: '' })
+            }
+        }, 1000)
+    }
+    componentWillUnmount() {
+        clearInterval(this.interval)
+    }
     static getDerivedStateFromProps(props, state) {
-        console.log(props.mathArray)
-        return { mathArray: props.mathArray }
+        try {
+            var allString = props.mathArray.reduce((accum, curr) => {
+                return accum += curr
+            }, "");
+            var katexString = MathJS.parse(allString).toTex({ parenthesis: 'keep' })
+            katexString = katexString.replace('cursor', state.cursor)
+            //console.log(katexString)
+            return {
+                mathArray: props.mathArray,
+                katexString: katexString,
+            }
+        } catch (error) {
+            console.log(state.katexString)
+            return {
+                mathArray: props.mathArray,
+                katexString: state.katexString,
+            }
+        }
+
+    }
+    renderDisplay() {
+        if (this.state.isLatex) {
+            return this.renderKatex()
+        } else {
+            return (
+                <Text>
+                    {this.renderText()}
+                </Text>
+            )
+        }
+    }
+    renderKatex() {
+        return (
+            <Katex
+                expression={this.state.katexString}
+                style={{ height: '100%', width: '100%' }}
+                inlineStyle={inlineStyle}
+                displayMode={false}
+                throwOnError={false}
+                errorColor="#f00"
+                macros={{}}
+                colorIsTextColor={false}
+                onLoad={() => this.setState({ loaded: true })}
+                onError={() => console.error('Error')}
+            />
+        )
     }
     renderText() {
         var text = []
@@ -219,10 +301,15 @@ class Display extends React.Component {
                         borderBottomColor: 'grey',
                         borderBottomWidth: 1
                     }}>{/**inputted+cursor */}
-                        <Col>
-                            <Text>
-                                {this.renderText()}
-                            </Text>
+                        <Col size={2} style={{ justifyContent: 'center' }}><Text style={{ fontWeight: 'bold' }}>Display form</Text></Col>
+                        <Col size={3} style={{ justifyContent: 'center', alignItems: 'flex-end' }}>
+                            <Text style={{ color: 'dimgrey' }}>{this.state.isLatex ? 'LaTeX form' : 'Text form'}</Text>
+                        </Col>
+                        <Col size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                            <Switch
+                                value={this.state.isLatex}
+                                onValueChange={() => { this.setState({ isLatex: !this.state.isLatex }) }}
+                            />
                         </Col>
                     </Row>
                     <Row size={3} style={{
@@ -230,7 +317,7 @@ class Display extends React.Component {
                         borderBottomWidth: 1
                     }}>
                         <Col>{/**katex */}
-
+                            {this.renderDisplay()}
                         </Col>
                     </Row>
                     <Row size={2} style={{
@@ -274,24 +361,24 @@ class FunctionPanel extends React.Component {
             cards: [
                 {
                     title: 'fnc1',
-                    row1: [],
-                    row2: [],
-                    row3: [],
-                    id: 1
+                    row1: [{fnc:()=>{console.log('pressed')},text:'uni222B'}],
+                    row2: [{fnc:()=>{console.log('pressed')},text:'uni222B'}],
+                    row3: [{fnc:()=>{console.log('pressed')},text:'uni222B'}],
+                    id: 0
                 },
                 {
                     title: 'fnc2',
                     row1: [],
                     row2: [],
                     row3: [],
-                    id: 2
+                    id: 1
                 },
                 {
                     title: 'fnc3',
                     row1: [],
                     row2: [],
                     row3: [],
-                    id: 3
+                    id: 2
                 },
             ]
         }
@@ -299,10 +386,28 @@ class FunctionPanel extends React.Component {
     renderButton(item, j) {
         var haha = item[j]
         if (haha == undefined) {
-            return (<Col></Col>)
+            return (<Col><Button transparent></Button></Col>)
         } else {
-            return (<Col><Button light onPress={haha.fnc}><Text>{item.haha.text}</Text></Button></Col>)
+            return (<Col><Button light onPress={haha.fnc} style={{justifyContent:'center'}}><MathIcon name={haha.text} size={20} ></MathIcon></Button></Col>)
         }
+    }
+    renderPages(j) {
+        var pages = []
+        for (var i = 0; i < this.state.cards.length; i++) {
+            if (i == j) {
+                pages.push(
+                    <Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(0,0,0,.8)' }}></View>
+                    </Col>
+                )
+            } else {
+                pages.push(
+                <Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(0,0,0,.2)' }}></View>
+                </Col>)
+            }
+        }
+        return (<Grid style={{width:'100%',height:'100%'}}><Row style={{width:'100%',height:'100%'}}>{pages}</Row></Grid>)
     }
     render() {
         return (
@@ -310,15 +415,16 @@ class FunctionPanel extends React.Component {
                 <DeckSwiper
                     style={{ width: '100%', height: '100%' }}
                     dataSource={this.state.cards}
-                    renderItem={item => <Card style={{ width: Dimensions.get('window').width-20 }}>
+                    renderItem={item => <Card style={{ width: Dimensions.get('window').width - 20 }}>
                         <CardItem>
                             <Left>
                                 <Title>{item.title}</Title>
                             </Left>
                             <Body>
-                                <Text>{item.id}</Text>
+                                {this.renderPages(item.id)}
                             </Body>
                         </CardItem>
+                        <Divider/>
                         <CardItem>
                             <Grid>
                                 <Row>
@@ -419,16 +525,16 @@ class NormalPanel extends React.Component {
                     </Row>
                     <Row>
                         <Col>
-                            <Button onPress={() => { update(addCursor("7")) }} light><Text>{"1"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("1")) }} light><Text>{"1"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("8")) }} light><Text>{"2"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("2")) }} light><Text>{"2"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("9")) }} light><Text>{"3"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("3")) }} light><Text>{"3"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("*")) }} light><Text>{"^"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("^")) }} light><Text>{"^"}</Text></Button>
                         </Col>
                         <Col>
                             <Button onPress={() => { update(addLast(")", addCursor("sqrt("))) }} light><Text>{"√"}</Text></Button>
@@ -469,7 +575,7 @@ class GraphPlotter extends React.Component {
  * @deprecated
  */
 class CalculatorView extends React.Component {
-    html = require("./index.html");
+    //html = require("./index.html");
     constructor(props) {
         super(props)
         console.log("loaded")

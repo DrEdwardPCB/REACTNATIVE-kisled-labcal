@@ -87,6 +87,16 @@ export default class SolutionsManager {
             return this.getData()
         }
     };
+    resetDefault=async()=>{
+        var keys = ['solutions', 'chemicals']
+        try {
+            await AsyncStorage.multiRemove(keys)
+            await this.getData()
+            alert("operation success")
+        } catch (error) {
+            alert("operation failed")
+        }
+    }
     getChemical(id){
         //console.log(id)
         var found=this.chemicals.filter(e=>e.id===id)[0]
@@ -265,9 +275,24 @@ export default class SolutionsManager {
             return false
         }
         this.chemicals=deletedList
+        var deletedSolList=this.solutions.filter(e=>{
+            var contains=false
+            var solventc=e.solvent.filter(f=>{return f.solvent==id})
+            var solutec=e.solute.filter(f=>{return f.solute==id})
+            if(solventc.length>0||solutec.length>0){
+                contains=true
+            }
+            if(contains){
+                return false
+            }else{
+                return true
+            }
+        })
+        this.solutions=deletedSolList
         var saved = await this.saveData()
         if(saved){
             this.chemicallist = this.chemicals.map(e => { return { id: e.id, name: e.name, solute:e.solute } })
+            this.solutionlist = this.solutions.map(e => { return { id: e.id, name: e.name } })
             return true
         }else{
             return false

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Blank Template",
+    "name": "Kisled LabCal",
     "slug": "kisled-labcal",
     "privacy": "public",
     "sdkVersion": "36.0.0",
@@ -11,9 +11,9 @@
     ],
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/AppIcon.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/Appsplash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

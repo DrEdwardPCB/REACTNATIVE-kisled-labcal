@@ -108,14 +108,18 @@ class Statementpage extends React.Component {
             <Markdown>
                 {
                     '# kisled-labcal\n\n' +
-                    'this app is create to assist calculation in wet lab and hopefully some in dry lab\n\n' +
+                    'this app is create to assist calculation in wet lab and hopefully some in dry lab\n' +
+                    'This project is also made free and open sourced under MIT Lisence [source code](https://github.com/DrEdwardPCB/REACTNATIVE-kisled-labcal) are available\n\n'+
                     '## Solution mix\n\n' +
                     'helps save solution recipe and calculate required mass, volume of the ingrediants based on the required volume, it can also estimate osmotic pressure\n\n' +
                     '## Scientific Calculator\n\n' +
-                    'a calculator that contains nearly all necessary function of lab needs\n' +
+                    'a calculator that contains nearly all necessary function of lab needs\n\n' +
                     '### Credits\n\n' +
-                    '* [Wong Yuk Ming, Edward](http://ekhome.life/)\n' +
-                    '* [PBHuang Lab@HKUST](https://facultyprofiles.ust.hk/profiles.php?profile=pingbo-huang-bohuangp)'
+                    '* Author: [Wong Yuk Ming, Edward](http://ekhome.life/)(Edward Wong)\n' +
+                    '* Affliation: [PBHuang Lab@HKUST](https://facultyprofiles.ust.hk/profiles.php?profile=pingbo-huang-bohuangp)\n\n'+
+                    '### Lisence\n\n' +
+                    'MIT License\n\nCopyright (c) 2020 Edward Wong\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.'
+                    
                 }
             </Markdown>
         </Content>)
@@ -139,14 +143,7 @@ class Memorypage extends React.Component {
                                     { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
                                     {
                                         text: 'OK', onPress: async () => {
-                                            var keys = ['solutions', 'chemicals']
-                                            try {
-                                                await AsyncStorage.multiRemove(keys)
-                                                alert("operation success")
-                                            } catch (error) {
-                                                alert("operation failed")
-                                            }
-
+                                            SolutionsManager.getInstance().resetDefault()
                                         }
                                     },
                                 ],
