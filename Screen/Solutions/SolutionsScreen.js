@@ -312,7 +312,7 @@ class SolutionsMix extends React.Component {
                                                 var tempnum = this.state.volume.toString()
                                                 this.setState({ volumeString: tempnum })
                                             } else {
-                                                var tempnum = parseInt(this.state.volumeString)
+                                                var tempnum = parseFloat(this.state.volumeString)
                                                 var tempnumstring = tempnum.toString()
                                                 this.setState({
                                                     volume: tempnum,
@@ -438,8 +438,8 @@ class SolventDataTableEntry extends React.Component {
         var requiredVolume = 0
         if (concu == '%v') {
             requiredVolume = conc / 100 * vol
-        } else {
-            requiredVolume = conc * density / 100 * vol
+        } else {   
+            requiredVolume = conc /density / 100 * vol
         }
         return {
             name: solvent.name,
@@ -621,7 +621,7 @@ class ChemicalEditor extends React.Component {
                                         chemicalName: chemical.name,
                                         chemicalMolarMass: chemical.molarmass.toString(),
                                         molarMassUnit: 'g/mol',
-                                        chemicalSolutionDensity: chemical.solutionDensity,
+                                        chemicalSolutionDensity: chemical.solutionDensity.toString(),
                                         chemicalRemarks: chemical.remarks,
                                         chemicalIsSolute: chemical.solute,
                                         chemicalDissocationMultiplier: chemical.dissociationMultiplier.toString()
@@ -702,7 +702,7 @@ class ChemicalEditor extends React.Component {
                                         var status = await SolutionsManager.getInstance().addNewChemical({
                                             solute: this.state.chemicalIsSolute,
                                             id: this.state.chemicalid,
-                                            solutionDensity: this.state.chemicalSolutionDensity,
+                                            solutionDensity: this.state.chemicalSolutionDensity=="n/a"?"n/a":parseFloat(this.state.chemicalSolutionDensity),
                                             name: this.state.chemicalName,
                                             molarmass: parseFloat(this.state.chemicalMolarMass),
                                             dissociationMultiplier: this.state.chemicalDissocationMultiplier,
@@ -731,7 +731,7 @@ class ChemicalEditor extends React.Component {
                                         var status = await SolutionsManager.getInstance().editChemical({
                                             solute: this.state.chemicalIsSolute,
                                             id: this.state.chemicalid,
-                                            solutionDensity: this.state.chemicalSolutionDensity,
+                                            solutionDensity: this.state.chemicalSolutionDensity=="n/a"?"n/a":parseFloat(this.state.chemicalSolutionDensity),
                                             name: this.state.chemicalName,
                                             molarmass: parseFloat(this.state.chemicalMolarMass),
                                             dissociationMultiplier: this.state.chemicalDissocationMultiplier,

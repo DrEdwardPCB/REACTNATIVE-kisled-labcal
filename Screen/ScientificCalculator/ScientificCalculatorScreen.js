@@ -111,7 +111,8 @@ class Calculator extends React.Component {
         super(props)
         this.state = {
             mathArr: ['cursor'],
-            memory: { A: '', B: '', C: '', D: '', E: '', F: '', X: '', Y: '', M: '' }
+            memory: { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 },
+            ans: ""
         }
     }
     moveCursorRight = () => {
@@ -178,16 +179,23 @@ class Calculator extends React.Component {
     }
     update = (array) => {
         console.log(array)
-        this.setState({ mathArr: array })
+        this.setState({ mathArr: array, ans:"" })
+    }
+    evaluate(){
+        var allString = props.mathArray.reduce((accum, curr) => {
+            return accum += curr
+        }, "");
+        allString=allString.replace('cursor')
+        MathJS.evaluate(allString,this.state.memory)
     }
     render() {
         return (
             <Content style={{ padding: 10 }} scrollEnabled={false} >
                 <Grid>
                     <Row></Row>
-                    <Display style={{ height: (Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} />
-                    <FunctionPanel style={{ height: (Dimensions.get('window').height - 64) * 0.35, width: '100%' }} />
-                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.45, width: '100%' }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} />
+                    <Display style={{ height: (Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} ams={this.state.ans} />
+                    <FunctionPanel style={{ height: (Dimensions.get('window').height - 64) * 0.35, width: '100%' }} addCursor={this.addCursor} addLast={this.addLast} update={this.update} />
+                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.45, width: '100%' }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} eval />
                 </Grid>
             </Content>
         )
@@ -217,9 +225,10 @@ class Display extends React.Component {
         this.state = {
             mathArray: props.mathArray,
             katexString: "",
-            ans: "",
+
             cursor: '',
             isLatex: true,
+            fallsback: false
         }
     }
     componentDidMount() {
@@ -245,18 +254,20 @@ class Display extends React.Component {
             return {
                 mathArray: props.mathArray,
                 katexString: katexString,
+                fallsback: false
             }
         } catch (error) {
             console.log(state.katexString)
             return {
                 mathArray: props.mathArray,
                 katexString: state.katexString,
+                fallsback: true
             }
         }
 
     }
     renderDisplay() {
-        if (this.state.isLatex) {
+        if (this.state.isLatex && !this.state.fallsback) {
             return this.renderKatex()
         } else {
             return (
@@ -293,6 +304,13 @@ class Display extends React.Component {
         }
         return text
     }
+    getAnswer() {
+        if (this.props.ans == "") {
+            return ""
+        } else {
+            return this.props.ans
+        }
+    }
     render() {
         return (
             <Row style={this.props.style}>
@@ -325,7 +343,7 @@ class Display extends React.Component {
                         borderBottomWidth: 1
                     }}>
                         <Col>{/**ans */}
-
+                            <Text>{this.getAnswer()}</Text>
                         </Col>
                     </Row>
                 </Col>
@@ -357,28 +375,43 @@ class Cursor extends React.Component {
 class FunctionPanel extends React.Component {
     constructor(props) {
         super(props)
+        const { addCursor, addLast, update } = props;
         this.state = {
             cards: [
                 {
-                    title: 'fnc1',
-                    row1: [{fnc:()=>{console.log('pressed')},text:'uni222B'}],
-                    row2: [{fnc:()=>{console.log('pressed')},text:'uni222B'}],
-                    row3: [{fnc:()=>{console.log('pressed')},text:'uni222B'}],
+                    title: 'Basic',
+                    row1: [{ fnc: () => { console.log('pressed') }, text: 'uni222B' }],
+                    row2: [{ fnc: () => { console.log('pressed') }, text: '222B' }],
+                    row3: [{ fnc: () => { console.log('pressed') }, text: 'uni222B' }],
                     id: 0
                 },
                 {
-                    title: 'fnc2',
-                    row1: [],
+                    title: 'Trigonometry',
+                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("sin")))) }, text: 'sin()' }, { fnc: () => { console.log('pressed') }, text: 'cos()' }, { fnc: () => { console.log('pressed') }, text: 'tan()' }, { fnc: () => { console.log('pressed') }, text: 'sin⁻¹()' }, { fnc: () => { console.log('pressed') }, text: 'cos⁻¹()' }, { fnc: () => { console.log('pressed') }, text: 'tan⁻¹()' }],
                     row2: [],
                     row3: [],
                     id: 1
                 },
                 {
-                    title: 'fnc3',
+                    title: 'Calculus',
                     row1: [],
                     row2: [],
                     row3: [],
                     id: 2
+                },
+                {
+                    title: 'Constant',
+                    row1: [],
+                    row2: [],
+                    row3: [],
+                    id: 3
+                },
+                {
+                    title: 'Memory',
+                    row1: [],
+                    row2: [],
+                    row3: [],
+                    id: 4
                 },
             ]
         }
@@ -388,7 +421,10 @@ class FunctionPanel extends React.Component {
         if (haha == undefined) {
             return (<Col><Button transparent></Button></Col>)
         } else {
-            return (<Col><Button light onPress={haha.fnc} style={{justifyContent:'center'}}><MathIcon name={haha.text} size={20} ></MathIcon></Button></Col>)
+            if (haha.text.split('uni').length == 1) {
+                return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center', padding: 0 }}><Text style={{ fontSize: 10, padding: 0, margin: 0, backgroundColor: 'pink' }}>{haha.text}</Text></Button></Col>)
+            }
+            return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center' }}><MathIcon name={haha.text} size={20} ></MathIcon></Button></Col>)
         }
     }
     renderPages(j) {
@@ -402,12 +438,12 @@ class FunctionPanel extends React.Component {
                 )
             } else {
                 pages.push(
-                <Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(0,0,0,.2)' }}></View>
-                </Col>)
+                    <Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(0,0,0,.2)' }}></View>
+                    </Col>)
             }
         }
-        return (<Grid style={{width:'100%',height:'100%'}}><Row style={{width:'100%',height:'100%'}}>{pages}</Row></Grid>)
+        return (<Grid style={{ width: '100%', height: '100%' }}><Row style={{ width: '100%', height: '100%' }}>{pages}</Row></Grid>)
     }
     render() {
         return (
@@ -424,7 +460,7 @@ class FunctionPanel extends React.Component {
                                 {this.renderPages(item.id)}
                             </Body>
                         </CardItem>
-                        <Divider/>
+                        <Divider />
                         <CardItem>
                             <Grid>
                                 <Row>
