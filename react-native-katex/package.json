@@ -1,0 +1,68 @@
+{
+  "_from": "react-native-katex",
+  "_id": "react-native-katex@0.3.0",
+  "_inBundle": false,
+  "_integrity": "sha512-vUK7YX1s+dI0PmEkm7cwiC4nZFAHtzxBJuSdv5wMJIM14PUeX0Wjr1kcW71SSIV6VWONVYVILrqYzUNlsioI0Q==",
+  "_location": "/react-native-katex",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "react-native-katex",
+    "name": "react-native-katex",
+    "escapedName": "react-native-katex",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/react-native-katex/-/react-native-katex-0.3.0.tgz",
+  "_shasum": "eb3f1ee0bc20e7e57a731442a41c0d7b6f974558",
+  "_spec": "react-native-katex",
+  "_where": "C:\\Users\\etern\\Desktop\\local programme\\REACTNATIVE-kisled-labcal",
+  "author": {
+    "name": "Ivan Zakharchanka"
+  },
+  "bugs": {
+    "url": "https://github.com/3axap4eHko/react-native-katex/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "katex": "^0.10.0-beta",
+    "prop-types": "^15.6.0"
+  },
+  "deprecated": false,
+  "description": "WebView bundled KaTeX",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "react": "^16.2.0",
+    "react-native": "^0.55.4"
+  },
+  "homepage": "https://github.com/3axap4eHko/react-native-katex#readme",
+  "keywords": [],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "name": "react-native-katex",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3axap4eHko/react-native-katex.git"
+  },
+  "scripts": {
+    "build": "node scripts/prebuild.js && babel src --out-dir dist --ignore __tests__",
+    "release": "yarn build && npm version minor && npm publish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.3.0"
+}
