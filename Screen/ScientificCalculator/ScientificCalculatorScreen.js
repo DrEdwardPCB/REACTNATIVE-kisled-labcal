@@ -1,6 +1,7 @@
 import Drawer from 'react-native-drawer'
 import React from 'react'
-import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Item, Grid, Row, Col, DeckSwiper, Card, CardItem } from 'native-base'
+import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Footer, Body, Item, Grid, Row, Col, Card, CardItem, } from 'native-base'
+import { DeckSwiper } from '../../updatedModules/nativebase/functionDeckSwiper'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
 import { AsyncStorage, Dimensions, View } from 'react-native'
@@ -111,7 +112,7 @@ class Calculator extends React.Component {
         super(props)
         this.state = {
             mathArr: ['cursor'],
-            memory: { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 },
+            memory: { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0, ans: 0 },
             ans: ""
         }
     }
@@ -179,23 +180,27 @@ class Calculator extends React.Component {
     }
     update = (array) => {
         console.log(array)
-        this.setState({ mathArr: array, ans:"" })
+        this.setState({ mathArr: array, ans: "" })
     }
-    evaluate(){
-        var allString = props.mathArray.reduce((accum, curr) => {
+    evaluate = () => {
+        var allString = this.state.mathArr.reduce((accum, curr) => {
             return accum += curr
         }, "");
-        allString=allString.replace('cursor')
-        MathJS.evaluate(allString,this.state.memory)
+        allString = allString.replace('cursor', "")
+        console.log(allString)
+        var answer = MathJS.evaluate(allString, this.state.memory)
+        console.log(answer)
+        console.log(typeof answer)
+        this.setState({ ans: answer, memory: { A: this.state.memory.A, B: this.state.memory.B, C: this.state.memory.C, D: this.state.memory.D, E: this.state.memory.E, F: this.state.memory.F, X: this.state.memory.X, Y: this.state.memory.Y, M: this.state.memory.M, ans: answer } })
     }
     render() {
         return (
             <Content style={{ padding: 10 }} scrollEnabled={false} >
                 <Grid>
                     <Row></Row>
-                    <Display style={{ height: (Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} ams={this.state.ans} />
+                    <Display style={{ height: (Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} ans={this.state.ans} />
                     <FunctionPanel style={{ height: (Dimensions.get('window').height - 64) * 0.35, width: '100%' }} addCursor={this.addCursor} addLast={this.addLast} update={this.update} />
-                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.45, width: '100%' }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} eval />
+                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.45, width: '100%' }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} evalu={this.evaluate} />
                 </Grid>
             </Content>
         )
@@ -380,9 +385,9 @@ class FunctionPanel extends React.Component {
             cards: [
                 {
                     title: 'Basic',
-                    row1: [{ fnc: () => { console.log('pressed') }, text: 'uni222B' }],
-                    row2: [{ fnc: () => { console.log('pressed') }, text: '222B' }],
-                    row3: [{ fnc: () => { console.log('pressed') }, text: 'uni222B' }],
+                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("factorial")))) }, text: 'uni21' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("abs")))) }, text: 'abs(v)' }],
+                    row2: [{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("combinations"))))) }, text: 'C(n,k)' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("exp")))) }, text: 'exp(v)' }],
+                    row3: [{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("permutations"))))) }, text: 'P(n,k)' }, { fnc: () => { update(addLast(")", addLast("e", addLast(",", addCursor("(", addCursor("log")))))) }, text: 'ln(v)' }],
                     id: 0
                 },
                 {
@@ -401,7 +406,7 @@ class FunctionPanel extends React.Component {
                 },
                 {
                     title: 'Constant',
-                    row1: [],
+                    row1: [{ fnc: () => { update(addCursor("e")) }, text: 'e' }],
                     row2: [],
                     row3: [],
                     id: 3
@@ -422,13 +427,16 @@ class FunctionPanel extends React.Component {
             return (<Col><Button transparent></Button></Col>)
         } else {
             if (haha.text.split('uni').length == 1) {
-                return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center', padding: 0 }}><Text style={{ fontSize: 10, padding: 0, margin: 0, backgroundColor: 'pink' }}>{haha.text}</Text></Button></Col>)
+                return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center', padding: 0 }}><Text style={{ fontSize: 10 }}>{haha.text}</Text></Button></Col>)
             }
             return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center' }}><MathIcon name={haha.text} size={20} ></MathIcon></Button></Col>)
         }
     }
     renderPages(j) {
         var pages = []
+        pages.push(<Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <Button small onPress={()=>{this._DeckSwiper._root.swipeRight()}}  style={{alignItems:'center',justifyContent:'center'}}><Icon type='Ionicons' name='ios-arrow-back'/></Button>
+        </Col>)
         for (var i = 0; i < this.state.cards.length; i++) {
             if (i == j) {
                 pages.push(
@@ -443,15 +451,20 @@ class FunctionPanel extends React.Component {
                     </Col>)
             }
         }
+        pages.push(<Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }} >
+            <Button small onPress={()=>{this._DeckSwiper._root.swipeLeft()}} style={{alignItems:'center',justifyContent:'center'}}><Icon type='Ionicons' name='ios-arrow-forward'/></Button>
+        </Col>)
         return (<Grid style={{ width: '100%', height: '100%' }}><Row style={{ width: '100%', height: '100%' }}>{pages}</Row></Grid>)
     }
     render() {
         return (
             <Row style={this.props.style}>
                 <DeckSwiper
+                    ref={(c) =>  this._DeckSwiper = c }
+                    looping={false}
                     style={{ width: '100%', height: '100%' }}
                     dataSource={this.state.cards}
-                    renderItem={item => <Card style={{ width: Dimensions.get('window').width - 20 }}>
+                    renderItem={item => <Card style={{maxHeight:'100%', width: Dimensions.get('window').width - 20 }}>
                         <CardItem>
                             <Left>
                                 <Title>{item.title}</Title>
@@ -504,7 +517,7 @@ class NormalPanel extends React.Component {
     }
     //<NormalPanel left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update}/>
     render() {
-        const { left, right, clr, del, addCursor, addLast, update } = this.props;
+        const { left, right, clr, del, addCursor, addLast, update, evalu } = this.props;
         return (
             <Row style={this.props.style}>
                 <Col>
@@ -584,10 +597,10 @@ class NormalPanel extends React.Component {
                             <Button onPress={() => { update(addCursor(".")) }} light><Text>{"."}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("ans")) }} light><Text>{"ans"}</Text></Button>
+                            <Button onPress={() => { update(addCursor('ans')) }} light><Text>{"ans"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("=")) }} primary><Text>{"="}</Text></Button>
+                            <Button onPress={() => { evalu() }} primary><Text>{"="}</Text></Button>
                         </Col>
                         <Col>
                             <Button onPress={() => { update(clr()) }} danger><Text>{"CLR"}</Text></Button>
