@@ -74,6 +74,9 @@ class MainView extends React.Component {
         //mapping
         if (this.state.currentPage === LABCAL.statementpage) {
             return (<Statementpage></Statementpage>)
+        }
+        else if (this.state.currentPage === LABCAL.statementpage) {
+            return (<HelpFeedbackpage></HelpFeedbackpage>)
         } else if (this.state.currentPage === LABCAL.memorymanagementpage) {
             return (<Memorypage></Memorypage>)
         }
@@ -97,6 +100,24 @@ class MainView extends React.Component {
             </Container>
         )
 
+    }
+}
+class HelpFeedbackpage extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+    render() {
+        return (<Content style={{padding:10}}>
+            <Markdown>
+                {
+                    '## help\n\n'+
+                    '* [Github](https://github.com/DrEdwardPCB/REACTNATIVE-kisled-labcal)\n\n'+
+                    '## Feedback\n\n'+
+                    '* [Github](https://github.com/DrEdwardPCB/REACTNATIVE-kisled-labcal)\n'+
+                    '* [Developer pages](http://ekhome.life#contact)'                   
+                }
+            </Markdown>
+        </Content>)
     }
 }
 class Statementpage extends React.Component {
@@ -157,7 +178,7 @@ class Memorypage extends React.Component {
                     <Row><Col><Title>{LABCAL.SCIENTIFICCALCULATORSCREENdn}</Title></Col></Row>
                     <Row>
                         <Col size={1}><Button 
-                        disabled
+                        
                         onPress={() => {
                             Alert.alert(
                                 'Confirmation',
@@ -166,7 +187,7 @@ class Memorypage extends React.Component {
                                     { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
                                     {
                                         text: 'OK', onPress: async () => {
-                                            var keys = ['solutions', 'chemicals']
+                                            var keys = ['calculatorMemory']
                                             try {
                                                 await AsyncStorage.multiRemove(keys)
                                                 alert("operation success")

@@ -27,6 +27,7 @@ export default class LABCAL {
     static SETTINGSSCREEN = 'settingsscreen'
 
     static SETTINGSSCREENdn ='Settings'
+    static helpfeedbackpage ='Help/Feedback'
     static memorymanagementpage = 'Memory Manage'
     static statementpage = 'statement'
 

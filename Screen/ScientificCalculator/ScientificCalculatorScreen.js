@@ -4,13 +4,14 @@ import { Header, Left, Right, Container, Icon, Button, Text, Title, Content, Foo
 import { DeckSwiper } from '../../updatedModules/nativebase/functionDeckSwiper'
 import ControlPanel from '../../utils/ControlPanel'
 import LABCAL from '../../utils/Labcal'
-import { AsyncStorage, Dimensions, View } from 'react-native'
+import { AsyncStorage, Dimensions, View, TouchableOpacity } from 'react-native'
 import { WebView } from 'react-native-webview';
 import uuid from "react-native-uuid";
 import Katex from 'react-native-katex';
 import { create, all } from 'mathjs'
 import { Switch, Divider } from 'react-native-paper'
 import MathIcon from '../../utils/Mathicon'
+import CalculatorManager from '../../utils/CalculatorManager'
 const config = {}
 const MathJS = create(all, config)
 
@@ -23,6 +24,7 @@ export default class ScientificCalculator extends React.Component {
             currentPage: LABCAL.calculatorpage,
             currentApp: LABCAL.SCIENTIFICCALCULATORSCREENdn
         }
+        CalculatorManager.getInstance()
 
     }
     updatePage = (page) => {
@@ -110,11 +112,45 @@ class MainView extends React.Component {
 class Calculator extends React.Component {
     constructor(props) {
         super(props)
+        console.log("================================")
+        console.log(CalculatorManager.getInstance())
+        console.log(CalculatorManager.getInstance().getMemory())
+        console.log("================================")
         this.state = {
             mathArr: ['cursor'],
-            memory: { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0, ans: 0 },
+            memory: CalculatorManager.getInstance().getMemory(),
             ans: ""
         }
+    }
+    componentDidMount() {
+        if (this.state.memory.error) {
+            this.interval = setInterval(() => {
+                this.setState({ memory: CalculatorManager.getInstance().getMemory() }, () => {
+                    if (!this.state.memory.error) {
+                        clearInterval(this.interval)
+                    }
+                })
+            }, 500)
+        }
+    }
+    saveto = (alphabet, value) => {
+        console.log('savetofnc')
+        console.log(this)
+        console.log(this.state)
+        console.log(this.state.memory)
+        var tempmem = JSON.parse(JSON.stringify(this.state.memory))
+        tempmem[alphabet] = value
+        this.setState({ memory: tempmem }, () => { CalculatorManager.getInstance().changeAndSaveData(tempmem) })
+    }
+    pushto = (alphabet, value) => {
+        var tempmem = JSON.parse(JSON.stringify(this.state.memory))
+        tempmem[alphabet].push(value)
+        this.setState({ memory: tempmem }, () => { CalculatorManager.getInstance().changeAndSaveData(tempmem) })
+    }
+    delArray = (alphabet) => {
+        var tempmem = JSON.parse(JSON.stringify(this.state.memory))
+        tempmem[alphabet] = []
+        this.setState({ memory: tempmem }, () => { CalculatorManager.getInstance().changeAndSaveData(tempmem) })
     }
     moveCursorRight = () => {
         if (this.state.mathArr.length == 1) {
@@ -182,16 +218,21 @@ class Calculator extends React.Component {
         console.log(array)
         this.setState({ mathArr: array, ans: "" })
     }
-    evaluate = () => {
+    evaluate = (callback) => {
         var allString = this.state.mathArr.reduce((accum, curr) => {
             return accum += curr
         }, "");
         allString = allString.replace('cursor', "")
-        console.log(allString)
+        //console.log(allString)
         var answer = MathJS.evaluate(allString, this.state.memory)
-        console.log(answer)
-        console.log(typeof answer)
-        this.setState({ ans: answer, memory: { A: this.state.memory.A, B: this.state.memory.B, C: this.state.memory.C, D: this.state.memory.D, E: this.state.memory.E, F: this.state.memory.F, X: this.state.memory.X, Y: this.state.memory.Y, M: this.state.memory.M, ans: answer } })
+        //console.log(answer)
+        //console.log(typeof answer)
+        this.setState(
+            {
+                ans: answer.toString(),
+                memory: { A: this.state.memory.A, B: this.state.memory.B, C: this.state.memory.C, D: this.state.memory.D, β: this.state.memory.β, α: this.state.memory.α, X: this.state.memory.X, Y: this.state.memory.Y, ans: answer }
+            },
+            () => { callback?callback(answer):'' })
     }
     render() {
         return (
@@ -199,8 +240,8 @@ class Calculator extends React.Component {
                 <Grid>
                     <Row></Row>
                     <Display style={{ height: (Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} ans={this.state.ans} />
-                    <FunctionPanel style={{ height: (Dimensions.get('window').height - 64) * 0.35, width: '100%' }} addCursor={this.addCursor} addLast={this.addLast} update={this.update} />
-                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.45, width: '100%' }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} evalu={this.evaluate} />
+                    <FunctionPanel style={{ height: (Dimensions.get('window').height - 64) * 0.37, width: '100%', }} addCursor={this.addCursor} addLast={this.addLast} update={this.update} saveto={this.saveto} pushto={this.pushto} delArray={this.delArray} memory={this.state.memory} evalu={this.evaluate} del={this.deleteAll} />
+                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.43, width: '100%', }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} evalu={this.evaluate} />
                 </Grid>
             </Content>
         )
@@ -380,46 +421,62 @@ class Cursor extends React.Component {
 class FunctionPanel extends React.Component {
     constructor(props) {
         super(props)
-        const { addCursor, addLast, update } = props;
+        const { addCursor, addLast, update, saveto, pushto, delArray, evalu, del } = props;
         this.state = {
+            memory: props.memory,
             cards: [
                 {
                     title: 'Basic',
-                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("factorial")))) }, text: 'uni21' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("abs")))) }, text: 'abs(v)' }],
-                    row2: [{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("combinations"))))) }, text: 'C(n,k)' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("exp")))) }, text: 'exp(v)' }],
-                    row3: [{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("permutations"))))) }, text: 'P(n,k)' }, { fnc: () => { update(addLast(")", addLast("e", addLast(",", addCursor("(", addCursor("log")))))) }, text: 'ln(v)' }],
+                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("factorial")))) }, text: 'uni21' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("abs")))) }, text: 'abs(v)' },{ fnc: () => { update(addLast(")",addLast(",", addCursor("(", addCursor("mod"))))) }, text: 'mod(v)' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("cbrt")))) }, text: '∛' },{ fnc: () => { update(addLast(")",addLast(",", addCursor("(", addCursor("gcd"))))) }, text: 'gcd(v)' },{ fnc: () => { update(addCursor(",")) }, text: 'uni2C' },],
+                    row2: [{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("combinations"))))) }, text: 'C(n,k)' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("exp")))) }, text: 'exp(v)' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("log10")))) }, text: 'log10(v)' },{ fnc: () => { update(addLast(")",addLast(",", addCursor("(", addCursor("nthRoot"))))) }, text: '∗√' },{ fnc: () => { update(addLast(")",addLast(",", addCursor("(", addCursor("lcm"))))) }, text: 'lcm(v)' },],
+                    row3: [{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("permutations"))))) }, text: 'P(n,k)' }, { fnc: () => { update(addLast(")", addLast("e", addLast(",", addCursor("(", addCursor("log")))))) }, text: 'ln(v)' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("log2")))) }, text: 'log2(v)' },{ fnc: () => { update(addLast(")", addLast(",", addCursor("(", addCursor("log"))))) }, text: 'log(v,b)' },{ fnc: () => { update(addLast(")",addLast(",", addCursor("(", addCursor("hypot"))))) }, text: 'hypot(v)' },],
                     id: 0
                 },
                 {
-                    title: 'Trigonometry',
-                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("sin")))) }, text: 'sin()' }, { fnc: () => { console.log('pressed') }, text: 'cos()' }, { fnc: () => { console.log('pressed') }, text: 'tan()' }, { fnc: () => { console.log('pressed') }, text: 'sin⁻¹()' }, { fnc: () => { console.log('pressed') }, text: 'cos⁻¹()' }, { fnc: () => { console.log('pressed') }, text: 'tan⁻¹()' }],
-                    row2: [],
+                    title: 'Trigonometry 1',
+                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("sin")))) }, text: 'sin()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("cos")))) }, text: 'cos()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("tan")))) }, text: 'tan()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("asin")))) }, text: 'sin⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("acos")))) }, text: 'cos⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("atan")))) }, text: 'tan⁻¹()' }],
+                    row2: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("csc")))) }, text: 'csc()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("sec")))) }, text: 'sec()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("cot")))) }, text: 'cot()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("acsc")))) }, text: 'csc⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("asec")))) }, text: 'sec⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("acot")))) }, text: 'cot⁻¹()' }],
                     row3: [],
                     id: 1
                 },
                 {
-                    title: 'Calculus',
-                    row1: [],
-                    row2: [],
+                    title: 'Trigonometry 2',
+                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("sinh")))) }, text: 'sinh()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("cosh")))) }, text: 'cosh()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("tanh")))) }, text: 'tanh()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("asinh")))) }, text: 'sinh⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("acosh")))) }, text: 'cos⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("atanh")))) }, text: 'tan⁻¹()' }],
+                    row2: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("csch")))) }, text: 'csch()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("sech")))) }, text: 'sech()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("coth")))) }, text: 'coth()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("acsch")))) }, text: 'csch⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("asech")))) }, text: 'sec⁻¹()' }, { fnc: () => { update(addLast(")", addCursor("(", addCursor("acoth")))) }, text: 'cot⁻¹()' }],
                     row3: [],
                     id: 2
                 },
                 {
-                    title: 'Constant',
-                    row1: [{ fnc: () => { update(addCursor("e")) }, text: 'e' }],
-                    row2: [],
-                    row3: [],
+                    title: 'Statistic',
+                    row1: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("mad")))) }, text: 'mad()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("mean")))) }, text: 'mean()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("std")))) }, text: 'std()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("sum")))) }, text: 'uni2211' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("gamma")))) }, text: 'γ()' }],
+                    row2: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("max")))) }, text: 'max()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("mad")))) }, text: 'mode()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("variance")))) }, text: 'variance()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("prod")))) }, text: 'uni220F' },{ fnc: () => { update(addLast(")",addLast(",", addCursor("(", addCursor("kldivergence"))))) }, text: 'KL()' }],
+                    row3: [{ fnc: () => { update(addLast(")", addCursor("(", addCursor("min")))) }, text: 'min()' },{ fnc: () => { update(addLast(")", addCursor("(", addCursor("mad")))) }, text: 'median()' },],
                     id: 3
                 },
                 {
-                    title: 'Memory',
-                    row1: [],
+                    title: 'Constant',
+                    row1: [{ fnc: () => { update(addCursor("e")) }, text: 'e' },{ fnc: () => { update(addCursor("i")) }, text: 'i' },{ fnc: () => { update(addCursor("phi")) }, text: 'uni3A6' },{ fnc: () => { update(addCursor("pi")) }, text: 'uni3C0' },],
                     row2: [],
                     row3: [],
                     id: 4
                 },
+                {
+                    //{ A: 0, B: 0, C: 0, D: 0, X: 0, Y: 0, ans: 0, α:[], β:[]}
+                    title: 'Memory',
+                    row1: [{ fnc: () => { update(addCursor("A")) }, text: 'A' }, { fnc: () => { evalu((ans) => {saveto('A', ans);update(del())}) }, text: '->A' }, { fnc: () => { update(addCursor("D")) }, text: 'D' }, { fnc: () => { evalu((ans) => {saveto('D', ans);update(del())}) }, text: '->D' }, { fnc: () => { update(addCursor("α")) }, text: 'α' }, { fnc: () => { update(addCursor("β")) }, text: 'β' }],
+                    row2: [{ fnc: () => { update(addCursor("B")) }, text: 'B' }, { fnc: () => { evalu((ans) => {saveto('B', ans);update(del())}) }, text: '->B' }, { fnc: () => { update(addCursor("X")) }, text: 'X' }, { fnc: () => { evalu((ans) => {saveto('X', ans);update(del())}) }, text: '->X' }, { fnc: () => { evalu((ans) => {pushto("α", ans);update(del())}) }, text: 'α+' }, { fnc: () => { evalu((ans) =>{pushto("β", ans);update(del())}) }, text: 'β+' }],
+                    row3: [{ fnc: () => { update(addCursor("C")) }, text: 'C' }, { fnc: () => { evalu((ans) => {saveto('C', ans);update(del())}) }, text: '->C' }, { fnc: () => { update(addCursor("Y")) }, text: 'Y' }, { fnc: () => { evalu((ans) => {saveto('Y', ans);update(del())}) }, text: '->Y' }, { fnc: () => { delArray("α") }, text: 'del(α)' }, { fnc: () => { delArray("β") }, text: 'del(β)' }],
+                    id: 5
+                },
             ]
         }
+    }
+    static getDerivedStateFromProps(props, state) {
+
+        console.log(props.memory)
+        return { memory: props.memory }
+
+
     }
     renderButton(item, j) {
         var haha = item[j]
@@ -427,15 +484,35 @@ class FunctionPanel extends React.Component {
             return (<Col><Button transparent></Button></Col>)
         } else {
             if (haha.text.split('uni').length == 1) {
-                return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center', padding: 0 }}><Text style={{ fontSize: 10 }}>{haha.text}</Text></Button></Col>)
+                return (<Col><TouchableOpacity onPress={haha.fnc} style={{
+                    alignItems: 'center', borderRadius: 35, minHeight: 45, justifyContent: 'center', backgroundColor: "#f4f4f4", shadowColor: "#000",
+                    shadowOffset: {
+                        width: 0,
+                        height: 2,
+                    },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+
+                    elevation: 5, margin: 1
+                }}><Text style={{ fontSize: 10 }}>{haha.text}</Text></TouchableOpacity></Col>)
             }
-            return (<Col><Button light onPress={haha.fnc} style={{ justifyContent: 'center' }}><MathIcon name={haha.text} size={20} ></MathIcon></Button></Col>)
+            return (<Col><Button light onPress={haha.fnc} style={{
+                justifyContent: 'center', borderRadius: 35, height: 45, maxHeight: 45, shadowColor: "#000",
+                shadowOffset: {
+                    width: 0,
+                    height: 2,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+
+                elevation: 5, margin: 1
+            }}><MathIcon name={haha.text} size={20} ></MathIcon></Button></Col>)
         }
     }
     renderPages(j) {
         var pages = []
         pages.push(<Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
-            <Button small onPress={()=>{this._DeckSwiper._root.swipeRight()}}  style={{alignItems:'center',justifyContent:'center'}}><Icon type='Ionicons' name='ios-arrow-back'/></Button>
+            <TouchableOpacity small onPress={() => { this._DeckSwiper._root.swipeRight() }} style={{ alignItems: 'center', justifyContent: 'center' }}><Icon type='Ionicons' name='ios-arrow-back' /></TouchableOpacity>
         </Col>)
         for (var i = 0; i < this.state.cards.length; i++) {
             if (i == j) {
@@ -452,7 +529,7 @@ class FunctionPanel extends React.Component {
             }
         }
         pages.push(<Col key={uuid.v4()} size={1} style={{ justifyContent: 'center', alignItems: 'center' }} >
-            <Button small onPress={()=>{this._DeckSwiper._root.swipeLeft()}} style={{alignItems:'center',justifyContent:'center'}}><Icon type='Ionicons' name='ios-arrow-forward'/></Button>
+            <TouchableOpacity small onPress={() => { this._DeckSwiper._root.swipeLeft() }} style={{ alignItems: 'center', justifyContent: 'center' }}><Icon type='Ionicons' name='ios-arrow-forward' /></TouchableOpacity>
         </Col>)
         return (<Grid style={{ width: '100%', height: '100%' }}><Row style={{ width: '100%', height: '100%' }}>{pages}</Row></Grid>)
     }
@@ -460,11 +537,21 @@ class FunctionPanel extends React.Component {
         return (
             <Row style={this.props.style}>
                 <DeckSwiper
-                    ref={(c) =>  this._DeckSwiper = c }
+                    ref={(c) => this._DeckSwiper = c}
                     looping={false}
                     style={{ width: '100%', height: '100%' }}
                     dataSource={this.state.cards}
-                    renderItem={item => <Card style={{maxHeight:'100%', width: Dimensions.get('window').width - 20 }}>
+                    renderItem={item => <Card style={{
+                        width: Dimensions.get('window').width - 20, shadowColor: "#000",
+                        shadowOffset: {
+                            width: 0,
+                            height: 2,
+                        },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+
+                        elevation: 5,
+                    }}>
                         <CardItem>
                             <Left>
                                 <Title>{item.title}</Title>
@@ -523,87 +610,337 @@ class NormalPanel extends React.Component {
                 <Col>
                     <Row>
                         <Col>
-                            <Button onPress={() => { update(addCursor("(")) }} light><Text>{"("}</Text></Button>
+                            <Button onPress={() => { update(addCursor("(")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"("}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor(")")) }} light><Text>{")"}</Text></Button>
+                            <Button onPress={() => { update(addCursor(")")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{")"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(left()) }} light><Icon type='SimpleLineIcons' name='arrow-left' /></Button>
+                            <Button onPress={() => { update(left()) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Icon type='SimpleLineIcons' name='arrow-left' /></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(right()) }} light><Icon type='SimpleLineIcons' name='arrow-right' /></Button>
+                            <Button onPress={() => { update(right()) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Icon type='SimpleLineIcons' name='arrow-right' /></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(del()) }} danger><Text>{"DEL"}</Text></Button>
+                            <Button onPress={() => { update(del()) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} danger><Text>{"DEL"}</Text></Button>
                         </Col>
                     </Row>
                     <Row>
                         <Col>
-                            <Button onPress={() => { update(addCursor("7")) }} light><Text>{"7"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("7")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"7"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("8")) }} light><Text>{"8"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("8")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"8"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("9")) }} light><Text>{"9"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("9")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"9"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("*")) }} light><Text>{"×"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("*")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"×"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("/")) }} light><Text>{"÷"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("/")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"÷"}</Text></Button>
                         </Col>
                     </Row>
                     <Row>
                         <Col>
-                            <Button onPress={() => { update(addCursor("4")) }} light><Text>{"4"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("4")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"4"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("5")) }} light><Text>{"5"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("5")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"5"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("6")) }} light><Text>{"6"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("6")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"6"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("+")) }} light><Text>{"+"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("+")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"+"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("-")) }} light><Text>{"-"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("-")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"-"}</Text></Button>
                         </Col>
                     </Row>
                     <Row>
                         <Col>
-                            <Button onPress={() => { update(addCursor("1")) }} light><Text>{"1"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("1")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"1"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("2")) }} light><Text>{"2"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("2")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"2"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("3")) }} light><Text>{"3"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("3")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"3"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor("^")) }} light><Text>{"^"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("^")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"^"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addLast(")", addCursor("sqrt("))) }} light><Text>{"√"}</Text></Button>
+                            <Button onPress={() => { update(addLast(")", addCursor("sqrt("))) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"√"}</Text></Button>
                         </Col>
                     </Row>
                     <Row>
                         <Col>
-                            <Button onPress={() => { update(addCursor("0")) }} light><Text>{"0"}</Text></Button>
+                            <Button onPress={() => { update(addCursor("0")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"0"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor(".")) }} light><Text>{"."}</Text></Button>
+                            <Button onPress={() => { update(addCursor(".")) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"."}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(addCursor('ans')) }} light><Text>{"ans"}</Text></Button>
+                            <Button onPress={() => { update(addCursor('ans')) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} light><Text>{"ans"}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { evalu() }} primary><Text>{"="}</Text></Button>
+                            <Button onPress={() => { evalu() }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} primary><Text>{"="}</Text></Button>
                         </Col>
                         <Col>
-                            <Button onPress={() => { update(clr()) }} danger><Text>{"CLR"}</Text></Button>
+                            <Button onPress={() => { update(clr()) }} style={{
+                                justifyContent: 'center', shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+
+                                elevation: 5, margin: 2
+                            }} danger><Text>{"CLR"}</Text></Button>
                         </Col>
                     </Row>
                 </Col>
@@ -611,11 +948,40 @@ class NormalPanel extends React.Component {
         )
     }
 }
+import Markdown from 'react-native-easy-markdown';
 class GraphPlotter extends React.Component {
     render() {
         return (
             <Content style={{ padding: 10 }}>
-                <Text>Graph plotter</Text>
+                <Body>
+                    <Card>
+                        <CardItem>
+                            <Left>
+                                <Title>Graph Plotter</Title>
+                            </Left>
+                            <Body>
+                                <Text note>Coming Soon</Text>
+                            </Body>
+                        </CardItem>
+                        <Divider/>
+                        <CardItem>
+                            <Markdown>
+                                {
+                                    '## Reason of halt development\n\n'+
+                                    'I am getting tired when coming to develop this app, I shall spend some time in research, gaming and also family and friends, yet my research require some function of this app very bad. so the development will stop here for a while\n\n'+
+                                    '## Graph plotter plan\n\n'+
+                                    '1. plot from math function\n'+
+                                    '2. plot data set\n'+
+                                    '3. support bar chart pie chart line chart scatter chart\n'+
+                                    '4. regression support\n'+
+                                    '5. export to csv and save chart to camera\n\n'+
+                                    '### target\n\n'+
+                                    'A MORE POWERFUL AND EASY TO USE GRAPH TOOL THAN EXCEL'
+                                }
+                            </Markdown>
+                        </CardItem>
+                    </Card>
+                </Body>
             </Content>
         )
     }

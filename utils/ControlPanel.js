@@ -42,10 +42,14 @@ export default class ControlPanel extends React.Component {
                 FlatListItem: [
                     {
                         id: 1,
-                        name: LABCAL.statementpage
+                        name: LABCAL.helpfeedbackpage
                     },
                     {
                         id: 2,
+                        name: LABCAL.statementpage
+                    },
+                    {
+                        id: 3,
                         name: LABCAL.memorymanagementpage
                     },
                 ],

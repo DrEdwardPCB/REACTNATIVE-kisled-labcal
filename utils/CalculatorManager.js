@@ -1,7 +1,7 @@
 import {AsyncStorage} from 'react-native'
-const defaultCalculatorMemory={ A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 }
+const defaultCalculatorMemory={ A: 0, B: 0, C: 0, D: 0, X: 0, Y: 0, ans: 0, α:[], β:[]}
 
-class CalculatorManager{
+export default class CalculatorManager{
     static instance=null
     static getInstance(){
         if (CalculatorManager.instance==null){
@@ -14,6 +14,22 @@ class CalculatorManager{
         this.calculatorMemory=null
         this.getData()
 
+    }
+    changeAndSaveData=async (data)=>{
+        var haha=JSON.parse(JSON.stringify(data))
+        this.calculatorMemory=haha
+        return await this.saveData()
+    }
+    getMemory=()=>{
+        console.log('getting')
+        if(this.ready){
+            console.log('success in getting')
+            console.log(this.memory)
+            return this.calculatorMemory
+        }else{
+            console.log('error in getting')
+            return {error:'e'}
+        }
     }
     saveData = async () => {
         var status = [false]
