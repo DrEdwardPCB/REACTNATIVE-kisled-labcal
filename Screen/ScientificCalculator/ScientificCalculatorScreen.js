@@ -112,10 +112,6 @@ class MainView extends React.Component {
 class Calculator extends React.Component {
     constructor(props) {
         super(props)
-        console.log("================================")
-        console.log(CalculatorManager.getInstance())
-        console.log(CalculatorManager.getInstance().getMemory())
-        console.log("================================")
         this.state = {
             mathArr: ['cursor'],
             memory: CalculatorManager.getInstance().getMemory(),

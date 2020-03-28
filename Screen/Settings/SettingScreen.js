@@ -10,6 +10,7 @@ import SolutionsManager from '../../utils/SolutionsManager'
 import { Switch, Divider, DataTable } from 'react-native-paper'
 
 import Markdown from 'react-native-easy-markdown';
+import CalculatorManager from '../../utils/CalculatorManager'
 
 
 
@@ -187,14 +188,7 @@ class Memorypage extends React.Component {
                                     { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
                                     {
                                         text: 'OK', onPress: async () => {
-                                            var keys = ['calculatorMemory']
-                                            try {
-                                                await AsyncStorage.multiRemove(keys)
-                                                alert("operation success")
-                                            } catch (error) {
-                                                alert("operation failed")
-                                            }
-
+                                            CalculatorManager.getInstance().resetDefault()
                                         }
                                     },
                                 ],
