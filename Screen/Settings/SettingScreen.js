@@ -75,7 +75,7 @@ class MainView extends React.Component {
         if (this.state.currentPage === LABCAL.statementpage) {
             return (<Statementpage></Statementpage>)
         }
-        else if (this.state.currentPage === LABCAL.statementpage) {
+        else if (this.state.currentPage === LABCAL.helpfeedbackpage) {
             return (<HelpFeedbackpage></HelpFeedbackpage>)
         } else if (this.state.currentPage === LABCAL.memorymanagementpage) {
             return (<Memorypage></Memorypage>)
