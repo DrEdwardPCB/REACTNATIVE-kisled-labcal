@@ -12,6 +12,7 @@ import { create, all } from 'mathjs'
 import { Switch, Divider } from 'react-native-paper'
 import MathIcon from '../../utils/Mathicon'
 import CalculatorManager from '../../utils/CalculatorManager'
+import { isIphoneX } from 'react-native-iphone-x-helper'
 const config = {}
 const MathJS = create(all, config)
 
@@ -220,7 +221,12 @@ class Calculator extends React.Component {
         }, "");
         allString = allString.replace('cursor', "")
         //console.log(allString)
-        var answer = MathJS.evaluate(allString, this.state.memory)
+        var answer;
+        try{
+            answer = MathJS.evaluate(allString, this.state.memory)
+        }catch(e){
+            answer = "Syntax Error"
+        }
         //console.log(answer)
         //console.log(typeof answer)
         this.setState(
@@ -235,9 +241,9 @@ class Calculator extends React.Component {
             <Content style={{ padding: 10 }} scrollEnabled={false} >
                 <Grid>
                     <Row></Row>
-                    <Display style={{ height: (Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} ans={this.state.ans} />
-                    <FunctionPanel style={{ height: (Dimensions.get('window').height - 64) * 0.37, width: '100%', }} addCursor={this.addCursor} addLast={this.addLast} update={this.update} saveto={this.saveto} pushto={this.pushto} delArray={this.delArray} memory={this.state.memory} evalu={this.evaluate} del={this.deleteAll} />
-                    <NormalPanel style={{ height: (Dimensions.get('window').height - 64) * 0.43, width: '100%', }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} evalu={this.evaluate} />
+                    <Display style={{ height: isIphoneX()?(Dimensions.get('window').height - 120) * 0.2:(Dimensions.get('window').height - 64) * 0.2, width: '100%' }} mathArray={this.state.mathArr} ans={this.state.ans} />
+                    <FunctionPanel style={{height: isIphoneX()?(Dimensions.get('window').height - 120) * 0.37:(Dimensions.get('window').height - 64) * 0.37, width: '100%',}} addCursor={this.addCursor} addLast={this.addLast} update={this.update} saveto={this.saveto} pushto={this.pushto} delArray={this.delArray} memory={this.state.memory} evalu={this.evaluate} del={this.deleteAll} />
+                    <NormalPanel style={{ height: isIphoneX()?(Dimensions.get('window').height - 120) * 0.43:(Dimensions.get('window').height - 64) * 0.43, width: '100%', }} left={this.moveCursorLeft} right={this.moveCursorRight} clr={this.deleteAll} del={this.backspace} addCursor={this.addCursor} addLast={this.addLast} update={this.update} evalu={this.evaluate} />
                 </Grid>
             </Content>
         )
